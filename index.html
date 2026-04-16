@@ -1569,13 +1569,11 @@ function scanFrame() {
     scannerAnimId = requestAnimationFrame(scanFrame);
     return;
   }
-  const size = Math.min(video.videoWidth, video.videoHeight);
-  canvas.width = canvas.height = size;
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
-  const ox = (video.videoWidth  - size) / 2;
-  const oy = (video.videoHeight - size) / 2;
-  ctx.drawImage(video, ox, oy, size, size, 0, 0, size, size);
-  const imageData = ctx.getImageData(0, 0, size, size);
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'attemptBoth' });
 
   if (code && code.data) {
