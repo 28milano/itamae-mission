@@ -668,8 +668,10 @@
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 2rem;text-align:center;width:100%">
       <div style="font-size:.72rem;color:var(--muted);margin-bottom:.25rem"
         data-ja="出会ったボランティア" data-en="Volunteers Met">出会ったボランティア</div>
-      <div id="met-count" style="font-family:'Space Mono',monospace;font-size:2.5rem;font-weight:700;color:var(--accent)">0</div>
-      <div style="font-size:.72rem;color:var(--muted)" data-ja="人" data-en="people">人</div>
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:.25rem">
+        <div id="met-count" style="font-family:'Space Mono',monospace;font-size:2.5rem;font-weight:700;color:var(--accent)">0</div>
+        <div style="font-size:.72rem;color:var(--muted)" data-ja="人" data-en="people">人</div>
+      </div>
     </div>
 
     <!-- 出会ったボランティア一覧 -->
@@ -812,8 +814,7 @@
     <div class="modal-handle"></div>
     <div style="text-align:center;padding:.5rem 0 1rem">
       <div style="font-size:2.5rem;margin-bottom:.5rem">🤝</div>
-      <div style="font-size:1.1rem;font-weight:900;margin-bottom:.35rem"
-        data-ja="出会いを記録しました！" data-en="Connection recorded!">出会いを記録しました！</div>
+      <div style="font-size:1.1rem;font-weight:900;margin-bottom:.35rem" id="meet-modal-title">友達になりました！</div>
       <div id="meet-modal-ig" style="margin-top:.75rem;display:none">
         <a id="meet-modal-ig-link"
           target="_blank"
@@ -1627,7 +1628,9 @@ async function handleQrResult(rawUrl) {
       await fbSet('/meetings/' + userId + '/' + meetUserId, now);
       await fbSet('/meetings/' + meetUserId + '/' + userId, now);
       const igHandle = new URLSearchParams(new URL(rawUrl).search).get('ig');
-      showMeetSuccessModal(igHandle);
+      const metUser = await fbGet('/users/' + meetUserId);
+      const metName = metUser ? metUser.name : null;
+      showMeetSuccessModal(igHandle, metName);
       loadMetList();
     } catch(e) {
       showToast(t('記録に失敗しました', 'Failed to record'));
@@ -1730,7 +1733,8 @@ async function loadMetList() {
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
         padding:.4rem .75rem;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.5rem">
         <span>${u.name}</span>
-        ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
+        ${u.ig ? `<a href="instagram://user?username=${u.ig}"
+          onclick="event.preventDefault();window.location.href='instagram://user?username=${u.ig}';setTimeout(()=>window.open('https://www.instagram.com/${u.ig}/','_blank'),600)"
           style="color:#e1306c;font-size:.7rem;text-decoration:none">@${u.ig}</a>` : ''}
       </div>
     `).join('');
@@ -1739,14 +1743,24 @@ async function loadMetList() {
   }
 }
 
-function showMeetSuccessModal(igHandle) {
+function showMeetSuccessModal(igHandle, metName) {
   const igSection = document.getElementById('meet-modal-ig');
   const igLink    = document.getElementById('meet-modal-ig-link');
   const igText    = document.getElementById('meet-modal-ig-text');
+  const title     = document.getElementById('meet-modal-title');
+
+  title.textContent = metName
+    ? metName + t('と友達になりました！', ' added as a friend!')
+    : t('友達になりました！', 'Added as a friend!');
 
   if (igHandle) {
     igSection.style.display = 'block';
-    igLink.href = 'https://www.instagram.com/' + igHandle + '/';
+    igLink.href = 'instagram://user?username=' + igHandle;
+    igLink.onclick = function(e) {
+      e.preventDefault();
+      window.location.href = 'instagram://user?username=' + igHandle;
+      setTimeout(() => { window.open('https://www.instagram.com/' + igHandle + '/', '_blank'); }, 600);
+    };
     igText.textContent = '@' + igHandle + ' をInstagramで見る';
   } else {
     igSection.style.display = 'none';
