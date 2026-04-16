@@ -1523,6 +1523,16 @@ let scannerStream = null;
 let scannerAnimId = null;
 let scannerTargetId = null;
 let scannerActive = false;
+let barcodeDetector = null;
+
+// BarcodeDetector が使えるか確認（Chrome/Android/Safari17+）
+if (window.BarcodeDetector) {
+  BarcodeDetector.getSupportedFormats().then(formats => {
+    if (formats.includes('qr_code')) {
+      barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    }
+  }).catch(() => {});
+}
 
 function openScanner(missionId) {
   scannerTargetId = missionId;
@@ -1561,7 +1571,7 @@ async function startCamera() {
   }
 }
 
-function scanFrame() {
+async function scanFrame() {
   if (!scannerActive) return;
   const video  = document.getElementById('scanner-video');
   const canvas = document.getElementById('scanner-canvas');
@@ -1569,6 +1579,19 @@ function scanFrame() {
     scannerAnimId = requestAnimationFrame(scanFrame);
     return;
   }
+
+  // BarcodeDetector（ネイティブ）優先
+  if (barcodeDetector) {
+    try {
+      const codes = await barcodeDetector.detect(video);
+      if (!scannerActive) return;
+      if (codes.length > 0) { handleQrResult(codes[0].rawValue); return; }
+    } catch(e) { barcodeDetector = null; } // エラー時はjsQRにフォールバック
+    if (scannerActive) scannerAnimId = requestAnimationFrame(scanFrame);
+    return;
+  }
+
+  // jsQR フォールバック
   canvas.width  = video.videoWidth;
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
@@ -1576,10 +1599,7 @@ function scanFrame() {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'attemptBoth' });
 
-  if (code && code.data) {
-    handleQrResult(code.data);
-    return;
-  }
+  if (code && code.data) { handleQrResult(code.data); return; }
   scannerAnimId = requestAnimationFrame(scanFrame);
 }
 
