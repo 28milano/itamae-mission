@@ -1103,10 +1103,6 @@ async function startMission() {
   userName = name; userOrg = '—'; userIg = ig;
   userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
 
-  localStorage.setItem('itamae_uid', userId);
-  localStorage.setItem('itamae_name', userName);
-  localStorage.setItem('itamae_ig', userIg);
-
   if (fbUrl) {
     try {
       const all = await fbGet('/users');
@@ -1117,6 +1113,11 @@ async function startMission() {
       await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, cleared, registeredAt:Date.now() });
     } catch(e) { console.warn('Firebase error', e); }
   }
+
+  // Firebase処理後に正しいuserIdで保存
+  localStorage.setItem('itamae_uid', userId);
+  localStorage.setItem('itamae_name', userName);
+  localStorage.setItem('itamae_ig', userIg);
 
   document.getElementById('disp-name').textContent = userName;
   document.getElementById('nav-tab').style.display = 'flex';
