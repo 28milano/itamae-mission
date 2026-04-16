@@ -614,12 +614,18 @@ async function loadAdmin() {
   let totalClears=0, fullCount=0;
 
   const validUsers = users.filter(u => u.name);
-  const ranked = validUsers.map(u=>{
+  validUsers.forEach(u => { const n=Object.keys(u.cleared||{}).length; totalClears+=n; if(n===MISSIONS.length) fullCount++; });
+  const allUids = Object.keys(all).filter(uid => all[uid].name);
+  const meetingCounts = {};
+  await Promise.all(allUids.map(async uid => {
+    try { const m = await fbGet('/meetings/'+uid); meetingCounts[uid] = m ? Object.keys(m).length : 0; } catch(e) { meetingCounts[uid]=0; }
+  }));
+  const ranked = allUids.map(uid => {
+    const u = all[uid];
     const n = Object.keys(u.cleared||{}).length;
-    const pts = Object.keys(u.cleared||{}).reduce((s,id)=>{
-      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
-    },0);
-    totalClears+=n; if(n===MISSIONS.length) fullCount++;
+    const bcCleared = Object.keys(u.cleared||{}).filter(id=>{ const m=MISSIONS.find(x=>x.id===id); return m&&(m.cat==='B'||m.cat==='C'); }).length;
+    const metCount = meetingCounts[uid] || 0;
+    const pts = metCount * 5 + bcCleared * 10;
     return {name:u.name||'—', org:u.org||'—', n, pts};
   }).sort((a,b)=>b.pts-a.pts||b.n-a.n).slice(0,10);
 
@@ -748,9 +754,8 @@ async function loadUsers() {
   if (!entries.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.8rem">ユーザーなし</div>'; return; }
 
   el.innerHTML = entries.map(([uid, u]) => {
-    const pts = Object.keys(u.cleared||{}).reduce((s,id)=>{
-      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
-    },0);
+    const bcCleared = Object.keys(u.cleared||{}).filter(id=>{ const m=MISSIONS.find(x=>x.id===id); return m&&(m.cat==='B'||m.cat==='C'); }).length;
+    const pts = bcCleared * 10; // meetings not available here; approximate
     const n = Object.keys(u.cleared||{}).length;
     return `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;
@@ -1052,18 +1057,22 @@ async function renderPublicRanking() {
   const all = await fbGet('/users');
   if (!all) return;
 
-  const users = Object.entries(all).map(([uid, u]) => {
+  const users = (await Promise.all(Object.entries(all).map(async ([uid, u]) => {
     const n = Object.keys(u.cleared || {}).length;
-    const pts = Object.keys(u.cleared || {}).reduce((s, id) => {
-      const m = MISSIONS.find(x => x.id === id); return s + (m ? m.pts : 0);
-    }, 0);
+    const bcCleared = Object.keys(u.cleared || {}).filter(id => {
+      const m = MISSIONS.find(x => x.id === id);
+      return m && (m.cat === 'B' || m.cat === 'C');
+    }).length;
     const cats = ['A','B','C'].map(cat => {
       const items = MISSIONS.filter(m => m.cat === cat);
       const done  = items.filter(m => (u.cleared||{})[m.id]).length;
       return done === items.length ? cat : null;
     }).filter(Boolean).join('');
+    let metCount = 0;
+    try { const meetings = await fbGet('/meetings/' + uid); metCount = meetings ? Object.keys(meetings).length : 0; } catch(e) {}
+    const pts = metCount * 5 + bcCleared * 10;
     return { uid, name: u.name || '—', n, pts, cats };
-  }).sort((a,b) => b.pts - a.pts || b.n - a.n);
+  }))).sort((a,b) => b.pts - a.pts || b.n - a.n);
 
   const top10 = users.slice(0, 10);
   const maxPts = top10[0]?.pts || 1;
