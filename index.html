@@ -636,9 +636,6 @@
     </div>
   </div>
 
-  <!-- 特典バッジ -->
-  <div class="reward-strip" id="reward-strip"></div>
-
   <!-- ミッション一覧 -->
   <div class="missions-body" id="missions-body"></div>
 </div>
@@ -910,12 +907,6 @@ function mText(m, field) {
   return val[lang] || val.ja || '';
 }
 
-const REWARDS = [
-  { threshold:3, label:{ ja:'3クリア', en:'3 Done' }, icon:'🎖️' },
-  { threshold:5, label:{ ja:'5クリア', en:'5 Done' }, icon:'🏅' },
-  { threshold:7, label:{ ja:'7クリア', en:'7 Done' }, icon:'🥇' },
-  { threshold:9, label:{ ja:'全達成！', en:'All Done!' }, icon:'🏆' },
-];
 
 const CAT_CONFIG = {
   A:{ label:{ ja:'カテゴリA：つながるミッション', en:'Category A: Connect' }, color:'var(--cat-a)' },
@@ -1138,13 +1129,6 @@ function renderMissions() {
   document.getElementById('prog-total').textContent = totalMissions;
   document.getElementById('disp-pts').textContent = pts + 'pt';
 
-  document.getElementById('reward-strip').innerHTML = REWARDS.map(r => `
-    <div class="reward-badge ${total >= r.threshold ? 'unlocked' : ''}">
-      <span class="rb-icon">${r.icon}</span>
-      <span class="rb-count">${r.threshold}</span>
-      <span>${typeof r.label === 'object' ? r.label[lang] || r.label.ja : r.label}</span>
-    </div>
-  `).join('');
 
   document.getElementById('missions-body').innerHTML = ['A','B','C'].map(cat => {
     const cfg = CAT_CONFIG[cat];
