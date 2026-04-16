@@ -1869,8 +1869,8 @@ async function renderPublicRankingFromData(all) {
   }));
   const users = ranked.sort((a,b) => b.pts - a.pts || b.n - a.n);
 
-  const top10 = users.slice(0, 10);
-  const maxPts = top10[0]?.pts || 1;
+  const top10 = users;
+  const maxPts = users[0]?.pts || 1;
 
   // my rank
   const myIdx = users.findIndex(u => u.uid === userId);
