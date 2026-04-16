@@ -592,8 +592,8 @@
         <input class="form-input"
           id="input-instagram"
           type="text"
-          placeholder="username"
-          maxlength="30"
+          placeholder="instagram.com/username"
+          maxlength="100"
           style="background:none;border:none;padding:0;flex:1" />
       </div>
     </div>
@@ -1095,7 +1095,9 @@ async function qrLandClear() {
 // ── START ─────────────────────────────────────────────────────
 async function startMission() {
   const name = document.getElementById('input-name').value.trim();
-  const ig   = document.getElementById('input-instagram').value.trim().replace(/^@/, '');
+  const igRaw = document.getElementById('input-instagram').value.trim();
+  const igMatch = igRaw.match(/instagram\.com\/([^/?#\s]+)/);
+  const ig = igMatch ? igMatch[1] : igRaw.replace(/^@/, '');
   if (!name) { alert(t('名前を入力してください','Please enter your name')); return; }
 
   userName = name; userOrg = '—'; userIg = ig;
