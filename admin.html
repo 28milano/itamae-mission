@@ -655,12 +655,27 @@ async function loadAdmin() {
   }).join('');
 }
 
-function buildQrGrid() {
+async function buildQrGrid() {
   const baseUrl = appUrl.replace(/\/?$/, '/');
   const el = document.getElementById('qr-base-url');
   if (el) el.textContent = baseUrl + '?mission=XXX';
 
-  const qrMissions = MISSIONS.filter(m=>m.mode==='qr');
+  // 固定ミッション＋カスタムミッションを合わせてQR生成
+  let allQrMissions = MISSIONS.filter(m => m.mode === 'qr');
+  if (fbUrl) {
+    try {
+      const customs = await fbGet('/custom_missions');
+      if (customs) {
+        Object.values(customs).forEach(m => {
+          if (m && m.mode === 'qr' && !allQrMissions.find(x => x.id === m.id)) {
+            allQrMissions.push(m);
+          }
+        });
+      }
+    } catch(e) {}
+  }
+
+  const qrMissions = allQrMissions;
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = '';
 
@@ -1168,6 +1183,11 @@ async function loadCustomMissionsList() {
     list.innerHTML = Object.values(customs).map(m => {
       const textJa = typeof m.text === 'object' ? m.text.ja : m.text;
       const catColor = m.cat==='A' ? 'var(--cat-a)' : m.cat==='B' ? 'var(--cat-b)' : 'var(--cat-c)';
+      const qrSection = m.mode === 'qr'
+        ? `<div style="background:#fff;border-radius:8px;padding:.75rem;display:flex;flex-direction:column;align-items:center;gap:.4rem;margin-top:.75rem">
+             <div id="custom-qr-${m.id}"></div>
+             <div style="font-size:.55rem;color:#666;font-family:'Space Mono',monospace;word-break:break-all;text-align:center">${appUrl.replace(/\/?$/,'/')}?mission=${m.id}</div>
+           </div>` : '';
       return `
         <div class="setting-card" style="margin-bottom:.5rem">
           <div style="display:flex;align-items:flex-start;gap:.75rem">
@@ -1181,8 +1201,24 @@ async function loadCustomMissionsList() {
               削除
             </button>
           </div>
+          ${qrSection}
         </div>`;
     }).join('');
+
+    // QRコードを生成
+    Object.values(customs).forEach(m => {
+      if (m.mode !== 'qr') return;
+      const el = document.getElementById('custom-qr-' + m.id);
+      if (!el) return;
+      setTimeout(() => {
+        new QRCode(el, {
+          text: appUrl.replace(/\/?$/, '/') + '?mission=' + m.id,
+          width: 180, height: 180,
+          colorDark: '#000000', colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }, 50);
+    });
   } catch(e) {
     list.innerHTML = '<div style="color:#ef4444;font-size:.8rem">読み込み失敗</div>';
   }
