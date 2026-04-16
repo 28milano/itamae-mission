@@ -1798,9 +1798,23 @@ function startRankingListener() {
       rankingUsersCache = data || {};
     } else {
       if (!rankingUsersCache) rankingUsersCache = {};
-      const uid = path.replace(/^\//, '').split('/')[0];
-      if (data === null) delete rankingUsersCache[uid];
-      else rankingUsersCache[uid] = Object.assign(rankingUsersCache[uid] || {}, data);
+      const parts = path.replace(/^\//, '').split('/');
+      const uid = parts[0];
+      if (parts.length === 1) {
+        if (data === null) delete rankingUsersCache[uid];
+        else rankingUsersCache[uid] = data;
+      } else {
+        // ネストしたパス（例: /uid/cleared/b1）を正しく反映
+        if (!rankingUsersCache[uid]) rankingUsersCache[uid] = {};
+        let obj = rankingUsersCache[uid];
+        for (let i = 1; i < parts.length - 1; i++) {
+          if (!obj[parts[i]] || typeof obj[parts[i]] !== 'object') obj[parts[i]] = {};
+          obj = obj[parts[i]];
+        }
+        const last = parts[parts.length - 1];
+        if (data === null) delete obj[last];
+        else obj[last] = data;
+      }
     }
     renderPublicRankingFromData(rankingUsersCache);
   });
