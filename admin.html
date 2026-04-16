@@ -253,7 +253,8 @@
         <strong>QRコードの使い方</strong><br>
         各ミッションのQRを印刷して会場に設置してください。<br>
         ボランティアがスキャンすると名前入力画面が開き、クリア記録されます。<br>
-        カテゴリCは自己申告のため QR なし。
+        カテゴリCは自己申告のため QR なし。<br><br>
+        <span style="font-size:.7rem;color:var(--muted)">QR URL: <span id="qr-base-url" style="font-family:'Space Mono',monospace"></span></span>
       </div>
       <div class="qr-grid" id="qr-grid"></div>
       <button class="btn-print" onclick="window.print()">🖨️ 印刷する</button>
@@ -436,6 +437,9 @@ const CAT_CONFIG = {
 // ── STATE ────────────────────────────────────────────────────
 let userId=null, userName='', userOrg='', cleared={};
 let fbUrl = localStorage.getItem('itamae_fb_url') || 'https://itamae-mission-default-rtdb.asia-southeast1.firebasedatabase.app';
+// 古い間違ったappUrl（admin.htmlを含む）を自動修正
+const _savedAppUrl = localStorage.getItem('itamae_app_url');
+if (_savedAppUrl && _savedAppUrl.includes('admin.html')) localStorage.removeItem('itamae_app_url');
 let appUrl = localStorage.getItem('itamae_app_url') || (location.origin + location.pathname.replace(/admin\.html$/, ''));
 
 // ── FIREBASE ─────────────────────────────────────────────────
@@ -632,6 +636,10 @@ async function loadAdmin() {
 }
 
 function buildQrGrid() {
+  const baseUrl = appUrl.replace(/\/$/, '');
+  const el = document.getElementById('qr-base-url');
+  if (el) el.textContent = baseUrl + '?mission=XXX';
+
   const qrMissions = MISSIONS.filter(m=>m.mode==='qr');
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = '';
