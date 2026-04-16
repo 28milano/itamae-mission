@@ -1760,7 +1760,7 @@ function showMeetSuccessModal(igHandle, metName) {
     igLink.target = '_blank';
     igLink.rel = 'noopener noreferrer';
     igLink.onclick = null;
-    igText.textContent = '@' + igHandle + ' とInstagramでつながる';
+    igText.textContent = (metName || ('@' + igHandle)) + ' とInstagramでつながる';
   } else {
     igSection.style.display = 'none';
   }
