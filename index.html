@@ -664,17 +664,17 @@
     <!-- 出会った人数 -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 2rem;text-align:center;width:100%">
       <div style="font-size:.72rem;color:var(--muted);margin-bottom:.25rem"
-        data-ja="出会ったボランティア" data-en="Volunteers Met">出会ったボランティア</div>
+        data-ja="友だちになったボランティア" data-en="Volunteer Friends">友だちになったボランティア</div>
       <div style="display:flex;align-items:baseline;justify-content:center;gap:.25rem">
         <div id="met-count" style="font-family:'Space Mono',monospace;font-size:2.5rem;font-weight:700;color:var(--accent)">0</div>
         <div style="font-size:.72rem;color:var(--muted)" data-ja="人" data-en="people">人</div>
       </div>
     </div>
 
-    <!-- 出会ったボランティア一覧 -->
+    <!-- 友だちになったボランティア一覧 -->
     <div style="width:100%">
       <div class="section-title"
-        data-ja="出会ったボランティア一覧" data-en="People You Met">出会ったボランティア一覧</div>
+        data-ja="友だちになったボランティア一覧" data-en="Volunteer Friends">友だちになったボランティア一覧</div>
       <div id="met-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem"></div>
     </div>
 
@@ -768,7 +768,7 @@
     <span class="nav-icon">🤝</span><span data-ja="つながる" data-en="Connect">つながる</span>
   </button>
   <button class="nav-btn" id="nav-myqr" onclick="switchTab('myqr')">
-    <span class="nav-icon">👤</span><span data-ja="友達リスト" data-en="Friends">友達リスト</span>
+    <span class="nav-icon">👤</span><span data-ja="友だちリスト" data-en="Friends">友だちリスト</span>
   </button>
   <button class="nav-btn" id="nav-ranking" onclick="switchTab('ranking')">
     <span class="nav-icon">🏆</span><span data-ja="ランキング" data-en="Ranking">ランキング</span>
@@ -811,7 +811,7 @@
     <div class="modal-handle"></div>
     <div style="text-align:center;padding:.5rem 0 1rem">
       <div style="font-size:2.5rem;margin-bottom:.5rem">🤝</div>
-      <div style="font-size:1.1rem;font-weight:900;margin-bottom:.35rem" id="meet-modal-title">友達になりました！</div>
+      <div style="font-size:1.1rem;font-weight:900;margin-bottom:.35rem" id="meet-modal-title">友だちになりました！</div>
       <div id="meet-modal-ig" style="margin-top:.75rem;display:none">
         <a id="meet-modal-ig-link"
           target="_blank"
@@ -1153,13 +1153,13 @@ function renderMissions() {
             <div class="mission-body">
               <div class="mission-text">
                 ${t(
-                  '友達になったボランティアと、QRを交換することで「出会い」が記録されます。<strong style="color:var(--accent2)">1人につき +5pt</strong>。友達100人を目指そう！',
+                  '友だちになったボランティアと、QRを交換することで「出会い」が記録されます。<strong style="color:var(--accent2)">1人につき +5pt</strong>。友だち100人を目指そう！',
                   'Exchange QR codes with volunteer friends to record your connection. <strong style="color:var(--accent2)">+5pt per friend</strong>. Aim for 100 friends!'
                 )}
               </div>
               <div style="display:flex;gap:.5rem;margin-top:.6rem">
                 <button class="btn-scan-qr" style="flex:1;justify-content:center;font-size:.75rem;white-space:nowrap;padding:.5rem .4rem" onclick="openMeetScanner()">
-                  📷 ${t('友達のQRをスキャン', 'Scan Friend\'s QR')}
+                  📷 ${t('友だちのQRをスキャン', 'Scan Friend\'s QR')}
                 </button>
                 <button class="btn-scan-qr" style="flex:1;justify-content:center;font-size:.75rem;white-space:nowrap;padding:.5rem .4rem" onclick="switchTab('myqr')">
                   👤 ${t('自分のQRを表示', 'Show My QR')}
@@ -1779,8 +1779,8 @@ function showMeetSuccessModal(igHandle, metName) {
   const title     = document.getElementById('meet-modal-title');
 
   title.textContent = metName
-    ? metName + t('と友達になりました！', ' added as a friend!')
-    : t('友達になりました！', 'Added as a friend!');
+    ? metName + t('と友だちになりました！', ' added as a friend!')
+    : t('友だちになりました！', 'Added as a friend!');
 
   if (igHandle) {
     igSection.style.display = 'block';
