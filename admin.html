@@ -648,7 +648,7 @@ async function loadAdmin() {
 }
 
 function buildQrGrid() {
-  const baseUrl = appUrl.replace(/\/$/, '');
+  const baseUrl = appUrl.replace(/\/?$/, '/');
   const el = document.getElementById('qr-base-url');
   if (el) el.textContent = baseUrl + '?mission=XXX';
 
@@ -657,7 +657,7 @@ function buildQrGrid() {
   grid.innerHTML = '';
 
   qrMissions.forEach(m=>{
-    const url = appUrl.replace(/\/$/,'') + '?mission=' + m.id;
+    const url = baseUrl + '?mission=' + m.id;
     const cfg = CAT_CONFIG[m.cat];
 
     const card = document.createElement('div');
