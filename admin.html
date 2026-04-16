@@ -623,9 +623,11 @@ async function loadAdmin() {
   const ranked = allUids.map(uid => {
     const u = all[uid];
     const n = Object.keys(u.cleared||{}).length;
-    const bcCleared = Object.keys(u.cleared||{}).filter(id=>{ const m=MISSIONS.find(x=>x.id===id); return m&&(m.cat==='B'||m.cat==='C'); }).length;
     const metCount = meetingCounts[uid] || 0;
-    const pts = metCount * 5 + bcCleared * 10;
+    const missionPts = Object.keys(u.cleared||{}).reduce((s,id)=>{
+      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
+    },0);
+    const pts = metCount * 5 + missionPts;
     return {name:u.name||'—', org:u.org||'—', n, pts};
   }).sort((a,b)=>b.pts-a.pts||b.n-a.n).slice(0,10);
 
@@ -754,8 +756,7 @@ async function loadUsers() {
   if (!entries.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.8rem">ユーザーなし</div>'; return; }
 
   el.innerHTML = entries.map(([uid, u]) => {
-    const bcCleared = Object.keys(u.cleared||{}).filter(id=>{ const m=MISSIONS.find(x=>x.id===id); return m&&(m.cat==='B'||m.cat==='C'); }).length;
-    const pts = bcCleared * 10; // meetings not available here; approximate
+    const pts = Object.keys(u.cleared||{}).reduce((s,id)=>{ const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0); },0);
     const n = Object.keys(u.cleared||{}).length;
     return `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;

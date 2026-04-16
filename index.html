@@ -1119,7 +1119,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const cfg = CAT_CONFIG[m.cat];
       document.getElementById('qrl-title').textContent = mText(m,'text');
       document.getElementById('qrl-sub').style.color = cfg.color;
-      document.getElementById('qrl-sub').textContent = (typeof cfg.label==='object'?cfg.label[lang]||cfg.label.ja:cfg.label) + '  ＋10pt';
+      document.getElementById('qrl-sub').textContent = (typeof cfg.label==='object'?cfg.label[lang]||cfg.label.ja:cfg.label) + '  ＋' + m.pts + 'pt';
       return;
     }
   }
@@ -1257,11 +1257,11 @@ async function startMission() {
 
 // ── RENDER ────────────────────────────────────────────────────
 function calcMyPts() {
-  const bcCleared = Object.keys(cleared).filter(id => {
+  const missionPts = Object.keys(cleared).reduce((s, id) => {
     const m = MISSIONS.find(x => x.id === id);
-    return m && (m.cat === 'B' || m.cat === 'C');
-  }).length;
-  return myMetCount * 5 + bcCleared * 10;
+    return s + (m ? m.pts : 0);
+  }, 0);
+  return myMetCount * 5 + missionPts;
 }
 
 function renderMissions() {
@@ -1351,7 +1351,7 @@ function missionCard(m) {
         ${done ? `<div class="mission-time">${cleared[m.id]}</div>` : actionBtn}
       </div>
       <div class="mission-badge">
-        ${done ? '' : `<span class="badge-pts">+10pt</span>`}
+        ${done ? '' : `<span class="badge-pts">+${m.pts}pt</span>`}
         ${typeLabel}
       </div>
     </div>
@@ -1425,7 +1425,7 @@ async function submitKeyword() {
   if (fbUrl) await fbSet('/users/' + userId + '/cleared', cleared);
   closeKeywordModal();
   renderMissions();
-  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +10pt');
+  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +' + (m ? m.pts : 0) + 'pt');
 }
 
 // ── MODAL (旧・未使用) ───────────────────────────────────────
@@ -1822,7 +1822,7 @@ async function handleQrResult(rawUrl) {
   cleared[mId] = ts;
   if (fbUrl) await fbSet('/users/' + userId + '/cleared', cleared);
   renderMissions();
-  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +10pt');
+  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +' + (m ? m.pts : 0) + 'pt');
 }
 
 function showScreen(id) {
@@ -2032,7 +2032,10 @@ async function renderPublicRankingFromData(all) {
       const meetings = await fbGet('/meetings/' + uid);
       metCount = meetings ? Object.keys(meetings).length : 0;
     } catch(e) {}
-    const pts = metCount * 5 + bcCleared * 10;
+    const missionPts = Object.keys(u.cleared||{}).reduce((s,id)=>{
+      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
+    },0);
+    const pts = metCount * 5 + missionPts;
     return { uid, name: u.name || '—', n, pts, cats, metCount };
   }));
   const users = ranked.sort((a,b) => b.pts - a.pts || b.n - a.n);
