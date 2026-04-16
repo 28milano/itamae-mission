@@ -1008,6 +1008,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (userData) {
           cleared = userData.cleared || {};
           userIg  = userData.ig || savedIg;
+        } else {
+          // Firebaseにユーザーが存在しない = 削除済み → リセット
+          localStorage.removeItem('itamae_uid');
+          localStorage.removeItem('itamae_name');
+          localStorage.removeItem('itamae_ig');
+          applyLang();
+          showScreen('register');
+          return;
         }
       }
       document.getElementById('input-name').value = userName;
