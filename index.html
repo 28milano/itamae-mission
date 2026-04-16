@@ -1165,11 +1165,11 @@ function renderMissions() {
                   'Exchange QR codes with your new volunteer friends to record your connection. Aim for 100 friends!'
                 )}
               </div>
-              <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
-                <button class="btn-scan-qr" onclick="openMeetScanner()">
+              <div style="display:flex;gap:.5rem;margin-top:.6rem">
+                <button class="btn-scan-qr" style="flex:1;justify-content:center" onclick="openMeetScanner()">
                   📷 ${t('友達のQRをスキャン', 'Scan Friend\'s QR')}
                 </button>
-                <button class="btn-scan-qr" onclick="switchTab('myqr')">
+                <button class="btn-scan-qr" style="flex:1;justify-content:center" onclick="switchTab('myqr')">
                   👤 ${t('自分のQRを表示', 'Show My QR')}
                 </button>
               </div>
