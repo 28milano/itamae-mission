@@ -37,6 +37,46 @@
   .screen { display:none; min-height:100vh; flex-direction:column; }
   .screen.active { display:flex; }
 
+  /* ── WELCOME ── */
+  #screen-welcome {
+    align-items:center; justify-content:center; padding:2rem;
+    position:relative; overflow:hidden;
+  }
+  #screen-welcome::before {
+    content:''; position:absolute;
+    width:400px; height:400px;
+    background:radial-gradient(circle,rgba(255,107,53,.12) 0%,transparent 70%);
+    top:-100px; left:-100px; pointer-events:none;
+  }
+  .welcome-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:2.5rem 2rem;
+    width:100%; max-width:400px;
+  }
+  .welcome-section {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:1rem 1.25rem; margin-bottom:.85rem;
+    display:flex; gap:.85rem; align-items:flex-start;
+  }
+  .welcome-section-icon { font-size:1.3rem; flex-shrink:0; margin-top:.1rem; }
+  .welcome-section-title {
+    font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:.3rem;
+  }
+  .welcome-section-text { font-size:.85rem; color:var(--text); line-height:1.65; }
+  .cat-chips { display:flex; flex-direction:column; gap:.4rem; margin-top:.6rem; }
+  .cat-chip {
+    display:flex; align-items:flex-start; gap:.55rem;
+    font-size:.8rem; line-height:1.5;
+  }
+  .cat-chip-dot {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:.35rem;
+  }
+  .welcome-note {
+    font-size:.75rem; color:var(--muted); text-align:center;
+    margin-bottom:1rem; line-height:1.6;
+  }
+
   /* ── REGISTER ── */
   #screen-register {
     align-items:center; justify-content:center; padding:2rem;
@@ -555,8 +595,106 @@
 </head>
 <body>
 
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-card">
+    <div class="logo-block">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.5rem">
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="ja" onclick="setLang('ja')">JA</button>
+          <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        </div>
+      </div>
+      <div class="logo-tag">SusHi Tech Tokyo 2026</div>
+      <div class="logo-title">ITAMAE<br><span>MISSION</span></div>
+      <div class="logo-sub" style="margin-bottom:1.5rem"
+        data-ja="はじめに以下をご確認ください"
+        data-en="Please read the following before you start">はじめに以下をご確認ください</div>
+    </div>
+
+    <div class="welcome-section">
+      <div class="welcome-section-icon">🎯</div>
+      <div style="flex:1">
+        <div class="welcome-section-title"
+          data-ja="このアプリについて"
+          data-en="About this app">このアプリについて</div>
+        <div class="welcome-section-text"
+          data-ja="ITAMAE MISSIONは、SusHi Tech Tokyo 2026のボランティア同士で楽しむためのミッションアプリです。3つのカテゴリのミッションに挑戦し、ポイントを貯めて特典をゲットしよう！"
+          data-en="ITAMAE MISSION is a mission app for SusHi Tech Tokyo 2026 volunteers to have fun together. Take on missions across 3 categories, earn points, and unlock rewards!">ITAMAE MISSIONは、SusHi Tech Tokyo 2026のボランティア同士で楽しむためのミッションアプリです。3つのカテゴリのミッションに挑戦し、ポイントを貯めて特典をゲットしよう！</div>
+        <div class="cat-chips">
+          <div class="cat-chip">
+            <div class="cat-chip-dot" style="background:var(--cat-a)"></div>
+            <div>
+              <span style="color:var(--cat-a);font-weight:700"
+                data-ja="カテゴリA：つながるミッション"
+                data-en="Category A: Connect">カテゴリA：つながるミッション</span><br>
+              <span style="color:var(--muted);font-size:.78rem"
+                data-ja="ボランティア同士でQRを交換して「出会い」を記録。何人と友だちになれたか競い合おう！"
+                data-en="Exchange QR codes with other volunteers to record your connections. Compete to see who can meet the most people!">ボランティア同士でQRを交換して「出会い」を記録。何人と友だちになれたか競い合おう！</span>
+            </div>
+          </div>
+          <div class="cat-chip">
+            <div class="cat-chip-dot" style="background:var(--cat-b)"></div>
+            <div>
+              <span style="color:var(--cat-b);font-weight:700"
+                data-ja="カテゴリB：STT探索ミッション"
+                data-en="Category B: Explore STT">カテゴリB：STT探索ミッション</span><br>
+              <span style="color:var(--muted);font-size:.78rem"
+                data-ja="セッション参加・ブース訪問など会場を能動的に体験してポイントを貯めよう！"
+                data-en="Attend sessions, visit booths, and actively explore the venue to earn points!">セッション参加・ブース訪問など会場を能動的に体験してポイントを貯めよう！</span>
+            </div>
+          </div>
+          <div class="cat-chip">
+            <div class="cat-chip-dot" style="background:var(--cat-c)"></div>
+            <div>
+              <span style="color:var(--cat-c);font-weight:700"
+                data-ja="カテゴリC：合言葉ミッション"
+                data-en="Category C: Secret Word">カテゴリC：合言葉ミッション</span><br>
+              <span style="color:var(--muted);font-size:.78rem"
+                data-ja="来場者へ声かけ・会場改善アイデア提出など、自分から動くミッション"
+                data-en="Talk to attendees, submit improvement ideas, and take initiative">来場者へ声かけ・会場改善アイデア提出など、自分から動くミッション</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="welcome-section">
+      <div class="welcome-section-icon">📸</div>
+      <div style="flex:1">
+        <div class="welcome-section-title"
+          data-ja="Instagramについて（任意）"
+          data-en="Instagram (optional)">Instagramについて（任意）</div>
+        <div class="welcome-section-text"
+          data-ja="次の画面でInstagramのIDを任意で入力できます。入力した場合、ミッション達成時に相手のプロフィールへのリンクが表示され、つながりやすくなります。入力しなくても参加できます。"
+          data-en="On the next screen, you can optionally enter your Instagram ID. If you do, a link to your profile will appear when you connect with other volunteers. You can leave it blank and still participate.">次の画面でInstagramのIDを任意で入力できます。入力した場合、ミッション達成時に相手のプロフィールへのリンクが表示され、つながりやすくなります。入力しなくても参加できます。</div>
+      </div>
+    </div>
+
+    <div class="welcome-section">
+      <div class="welcome-section-icon">🔒</div>
+      <div style="flex:1">
+        <div class="welcome-section-title"
+          data-ja="個人情報の取り扱い"
+          data-en="Privacy">個人情報の取り扱い</div>
+        <div class="welcome-section-text"
+          data-ja="入力いただいたお名前・Instagram IDは、本アプリ内のランキング表示・ボランティア同士のつながり機能にのみ使用します。第三者への提供やアプリ外での利用は一切行いません。"
+          data-en="Your name and Instagram ID will only be used within this app for the ranking and volunteer connection features. We will never share your information with third parties or use it outside this app.">入力いただいたお名前・Instagram IDは、本アプリ内のランキング表示・ボランティア同士のつながり機能にのみ使用します。第三者への提供やアプリ外での利用は一切行いません。</div>
+      </div>
+    </div>
+
+    <p class="welcome-note"
+      data-ja="上記の内容を確認のうえ、次へお進みください。"
+      data-en="By proceeding, you acknowledge the above.">上記の内容を確認のうえ、次へお進みください。</p>
+
+    <button class="btn-primary" onclick="showScreen('register')"
+      data-ja="確認しました →"
+      data-en="I understand →">確認しました →</button>
+  </div>
+</div>
+
 <!-- REGISTER -->
-<div id="screen-register" class="screen active">
+<div id="screen-register" class="screen">
   <div class="register-card">
     <div class="logo-block">
       <div style="display:flex;justify-content:flex-end;margin-bottom:.5rem">
@@ -1027,7 +1165,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   applyLang(); // apply saved language preference
-  showScreen('register');
+  showScreen('welcome');
 });
 
 function showRegister() { showScreen('register'); }
