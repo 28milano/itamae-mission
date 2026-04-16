@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ITAMAE MISSION - Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #ff6b35;
+    --accent2: #ffb800;
+    --cat-a: #ff6b35;
+    --cat-b: #3b82f6;
+    --cat-c: #10b981;
+    --text: #f0f0f0;
+    --muted: #666;
+    --success: #10b981;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  .screen { display:none; min-height:100vh; flex-direction:column; }
+  .screen.active { display:flex; }
+
+  /* ── REGISTER ── */
+  #screen-register {
+    align-items:center; justify-content:center; padding:2rem;
+    position:relative; overflow:hidden;
+  }
+  #screen-register::before {
+    content:''; position:absolute;
+    width:400px; height:400px;
+    background:radial-gradient(circle,rgba(255,107,53,.15) 0%,transparent 70%);
+    top:-100px; right:-100px; pointer-events:none;
+  }
+  .register-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:2.5rem 2rem;
+    width:100%; max-width:400px;
+  }
+  .logo-block { text-align:center; margin-bottom:2rem; }
+  .logo-tag {
+    font-family:'Space Mono',monospace; font-size:.65rem;
+    letter-spacing:.2em; color:var(--accent);
+    background:rgba(255,107,53,.1); border:1px solid rgba(255,107,53,.3);
+    padding:.25rem .75rem; border-radius:100px; display:inline-block; margin-bottom:.75rem;
+  }
+  .logo-title { font-size:2.2rem; font-weight:900; letter-spacing:-.02em; line-height:1; }
+  .logo-title span { color:var(--accent); }
+  .logo-sub { font-size:.8rem; color:var(--muted); margin-top:.5rem; }
+  .form-group { margin-bottom:1.25rem; }
+  .form-label { font-size:.75rem; color:var(--muted); letter-spacing:.05em; margin-bottom:.4rem; display:block; }
+  .form-input {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:.85rem 1rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:1rem;
+    transition:border-color .2s; outline:none;
+  }
+  .form-input:focus { border-color:var(--accent); }
+  .btn-primary {
+    width:100%; background:var(--accent); color:white; border:none;
+    border-radius:10px; padding:1rem;
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:1rem; font-weight:700;
+    cursor:pointer; transition:opacity .2s,transform .1s; margin-top:.5rem;
+  }
+  .btn-primary:active { transform:scale(.98); opacity:.9; }
+
+  /* config */
+  .config-section {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:1rem; margin-bottom:1.25rem;
+  }
+  .config-toggle { font-size:.75rem; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:.4rem; user-select:none; }
+  .config-fields { display:none; margin-top:.85rem; }
+  .config-fields.open { display:block; }
+  .config-input {
+    width:100%; background:var(--bg); border:1px solid var(--border);
+    border-radius:6px; padding:.5rem .75rem; color:var(--text);
+    font-family:'Space Mono',monospace; font-size:.72rem; margin-bottom:.5rem; outline:none;
+  }
+  .btn-sm {
+    background:var(--accent); border:none; border-radius:6px;
+    padding:.4rem 1rem; color:white; font-size:.75rem; font-weight:700;
+    cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif;
+  }
+
+  /* ── SETTINGS PANEL ── */
+  .setting-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1rem; margin-bottom:.85rem;
+  }
+  .setting-card-title {
+    font-size:.85rem; font-weight:700; margin-bottom:.15rem;
+  }
+  .setting-card-sub {
+    font-size:.72rem; color:var(--muted); margin-bottom:.85rem;
+  }
+  .setting-row {
+    display:flex; align-items:center; gap:.6rem; margin-bottom:.6rem;
+  }
+  .setting-label {
+    font-size:.72rem; color:var(--muted); width:80px; flex-shrink:0;
+  }
+  .setting-select {
+    flex:1; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:.45rem .6rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.82rem; outline:none;
+  }
+  .setting-input {
+    flex:1; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:.45rem .6rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.82rem; outline:none;
+  }
+  .setting-input:focus, .setting-select:focus { border-color:var(--accent); }
+  .setting-sub-row { display:none; }
+  .setting-sub-row.visible { display:flex; }
+  .setting-hint-text {
+    font-size:.72rem; color:var(--muted); margin-bottom:.6rem;
+    padding:.5rem .75rem; background:var(--surface2); border-radius:6px;
+  }
+
+  /* ── ADMIN PANEL ── */
+  #screen-admin { padding:0; }
+  .admin-header {
+    background:#0f0f0f; border-bottom:1px solid var(--border);
+    padding:.75rem 1.25rem; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:10;
+  }
+  .admin-title { font-family:'Space Mono',monospace; font-size:.85rem; font-weight:700; color:var(--accent); letter-spacing:.1em; }
+  .admin-tabs { display:flex; gap:.4rem; }
+  .admin-tab {
+    background:none; border:1px solid var(--border); border-radius:6px;
+    padding:.35rem .75rem; color:var(--muted); font-size:.72rem; font-weight:700;
+    cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif; transition:all .2s;
+  }
+  .admin-tab.active { background:var(--accent); border-color:var(--accent); color:white; }
+  .admin-body { padding:1.25rem; flex:1; overflow-y:auto; }
+
+  .admin-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin-bottom:1.25rem; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:.85rem .75rem; text-align:center;
+  }
+  .stat-num { font-family:'Space Mono',monospace; font-size:1.6rem; font-weight:700; color:var(--accent); }
+  .stat-label { font-size:.65rem; color:var(--muted); margin-top:.2rem; }
+
+  .section-title { font-size:.72rem; font-weight:700; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-bottom:.75rem; margin-top:1.25rem; }
+
+  .ranking-row {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.75rem .85rem; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px; margin-bottom:.5rem;
+  }
+  .rank-num { font-family:'Space Mono',monospace; font-size:.85rem; font-weight:700; color:var(--muted); width:28px; text-align:center; flex-shrink:0; }
+  .rank-num.top { color:var(--accent2); }
+  .rank-name { flex:1; font-size:.85rem; font-weight:700; line-height:1.4; }
+  .rank-score { font-family:'Space Mono',monospace; font-size:.85rem; font-weight:700; color:var(--accent); flex-shrink:0; }
+
+  .mission-heat-row { display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
+  .heat-bar-wrap { width:80px; height:6px; background:var(--border); border-radius:3px; flex-shrink:0; }
+  .heat-bar { height:100%; border-radius:3px; transition:width .4s; }
+  .heat-count { font-family:'Space Mono',monospace; font-size:.72rem; color:var(--muted); width:24px; text-align:right; flex-shrink:0; }
+
+  /* ── QR GRID ── */
+  .qr-intro { font-size:.8rem; color:var(--muted); line-height:1.7; margin-bottom:1rem; padding:.85rem; background:var(--surface); border-radius:10px; border:1px solid var(--border); }
+  .qr-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; margin-bottom:1.25rem; }
+  .qr-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem; display:flex; flex-direction:column; align-items:center; gap:.6rem; }
+  .qr-card-cat { font-size:.65rem; font-weight:700; letter-spacing:.08em; }
+  .qr-card-title { font-size:.78rem; font-weight:700; text-align:center; line-height:1.4; }
+  .qr-url { font-size:.55rem; color:var(--muted); font-family:'Space Mono',monospace; word-break:break-all; text-align:center; }
+  .btn-print { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:.85rem; color:var(--text); font-family:'Zen Kaku Gothic New',sans-serif; font-size:.9rem; font-weight:700; cursor:pointer; }
+
+  @media print {
+    .nav-tab, .admin-header, #panel-stats, .btn-print, .admin-tabs, .qr-intro { display:none!important; }
+    body { background:white; color:black; }
+    .qr-card { border:1px solid #ccc; break-inside:avoid; }
+    .qr-grid { grid-template-columns:repeat(3,1fr); }
+    .qr-card-title,.qr-card-cat,.qr-url { color:#333; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ADMIN LOGIN -->
+<div id="screen-register" class="screen active">
+  <div class="register-card">
+    <div class="logo-block">
+      <div class="logo-tag">ITAMAE MISSION</div>
+      <div class="logo-title">ADMIN<br><span>PANEL</span></div>
+      <div class="logo-sub">管理者専用画面</div>
+    </div>
+    <div class="config-section">
+      <div class="config-toggle" onclick="toggleConfig()" style="cursor:default;color:var(--text)">
+        🔧 Firebase設定
+      </div>
+      <div class="config-fields open" id="config-fields">
+        <input class="config-input" id="fb-url" placeholder="https://xxx.firebaseio.com" />
+        <input class="config-input" id="app-url" placeholder="参加者アプリのURL（QR生成用）" />
+        <button class="btn-sm" onclick="saveConfig()">保存</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="enterAdmin()">管理画面へ →</button>
+  </div>
+</div>
+
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen has-nav">
+  <div class="admin-header">
+    <div class="admin-title">ADMIN</div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" id="tab-stats" onclick="switchAdminTab('stats')">統計</button>
+      <button class="admin-tab" id="tab-qr" onclick="switchAdminTab('qr')">QR印刷</button>
+      <button class="admin-tab" id="tab-settings" onclick="switchAdminTab('settings')">⚙️設定</button>
+    </div>
+  </div>
+  <div class="admin-body">
+
+    <!-- STATS PANEL -->
+    <div id="panel-stats">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
+        <button class="admin-tab" style="font-size:.72rem" onclick="loadAdmin()">↻ 更新</button>
+      </div>
+      <div class="admin-stats">
+        <div class="stat-card"><div class="stat-num" id="a-total">0</div><div class="stat-label">参加者</div></div>
+        <div class="stat-card"><div class="stat-num" id="a-clears">0</div><div class="stat-label">総クリア</div></div>
+        <div class="stat-card"><div class="stat-num" id="a-full">0</div><div class="stat-label">全達成</div></div>
+      </div>
+      <div class="section-title">🏆 ランキング TOP10</div>
+      <div id="ranking-list"></div>
+      <div class="section-title">📊 ミッション別クリア数</div>
+      <div id="mission-heat"></div>
+    </div>
+
+    <!-- QR PANEL -->
+    <div id="panel-qr">
+      <div class="qr-intro">
+        <strong>QRコードの使い方</strong><br>
+        各ミッションのQRを印刷して会場に設置してください。<br>
+        ボランティアがスキャンすると名前入力画面が開き、クリア記録されます。<br>
+        カテゴリCは自己申告のため QR なし。
+      </div>
+      <div class="qr-grid" id="qr-grid"></div>
+      <button class="btn-print" onclick="window.print()">🖨️ 印刷する</button>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="panel-settings" style="display:none">
+      <div class="qr-intro" style="margin-bottom:1rem">
+        <strong>カテゴリC 入力判定の設定</strong><br>
+        各ミッションの判定方式・合言葉・最小文字数を変更できます。<br>
+        設定はFirebase（または端末）に保存されます。
+      </div>
+      <div id="settings-cards"></div>
+      <button class="btn-primary" style="margin-top:1rem" onclick="saveSettings()">💾 設定を保存</button>
+      <div id="settings-saved" style="text-align:center;font-size:.78rem;color:var(--success);margin-top:.6rem;min-height:1.2em"></div>
+
+      <!-- ミッション追加 -->
+      <div style="margin-top:1.5rem">
+        <div class="section-title">➕ ミッションを追加</div>
+        <div class="setting-card">
+          <div class="setting-row">
+            <div class="setting-label">カテゴリ</div>
+            <select class="setting-select" id="new-cat">
+              <option value="A">A：つながる</option>
+              <option value="B">B：STT理解</option>
+              <option value="C">C：当事者</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">内容（JA）</div>
+            <input class="setting-input" id="new-text-ja" type="text" placeholder="ミッション内容（日本語）" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">内容（EN）</div>
+            <input class="setting-input" id="new-text-en" type="text" placeholder="Mission text (English)" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">ポイント</div>
+            <input class="setting-input" id="new-pts" type="number" min="1" max="100" value="10" style="width:80px;flex:none" />
+            <span style="font-size:.78rem;color:var(--muted)">pt</span>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">クリア方式</div>
+            <select class="setting-select" id="new-mode" onchange="onNewModeChange()">
+              <option value="qr">QRスキャン</option>
+              <option value="keyword">合言葉</option>
+              <option value="minlength">自由入力（文字数）</option>
+              <option value="freeform">自由入力（何でも）</option>
+            </select>
+          </div>
+          <div id="new-mode-extra" style="display:none">
+            <div class="setting-row" id="new-row-answers" style="display:none">
+              <div class="setting-label">合言葉</div>
+              <input class="setting-input" id="new-answers" type="text" placeholder="カンマ区切りで複数可" />
+            </div>
+            <div class="setting-row" id="new-row-minlen" style="display:none">
+              <div class="setting-label">最小文字数</div>
+              <input class="setting-input" id="new-minlen" type="number" min="1" value="3" style="width:80px;flex:none" />
+            </div>
+            <div class="setting-row">
+              <div class="setting-label">質問文（JA）</div>
+              <input class="setting-input" id="new-question-ja" type="text" placeholder="入力を促す質問文" />
+            </div>
+            <div class="setting-row">
+              <div class="setting-label">質問文（EN）</div>
+              <input class="setting-input" id="new-question-en" type="text" placeholder="Question text (English)" />
+            </div>
+          </div>
+          <button class="btn-primary" style="margin-top:1rem" onclick="addCustomMission()">＋ ミッションを追加</button>
+          <div id="new-mission-result" style="text-align:center;font-size:.78rem;margin-top:.6rem;min-height:1.2em"></div>
+        </div>
+
+        <div class="section-title" style="margin-top:1.25rem">📋 追加済みミッション一覧</div>
+        <div id="custom-missions-list">
+          <div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Firebase未接続または追加ミッションなし</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- no participant nav needed -->
+
+<!-- MODAL (自己申告用) -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-note" id="modal-note"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-confirm" onclick="confirmMission()">✓ クリア！</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── LANGUAGE ────────────────────────────────────────────────
+let lang = localStorage.getItem('itamae_lang') || 'ja';
+
+function t(ja, en) { return lang === 'en' ? en : ja; }
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('itamae_lang', l);
+  applyLang();
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-ja]').forEach(el => {
+    el.textContent = lang === 'en' ? el.dataset.en : el.dataset.ja;
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  // update placeholders
+  const nameInput = document.getElementById('input-name');
+  if (nameInput) nameInput.placeholder = t('例：田中みらの', 'e.g. Taro Yamada');
+  const startBtn = document.getElementById('btn-start');
+  if (startBtn) startBtn.textContent = t('ミッションをスタート →', 'Start Missions →');
+  // re-render dynamic content if already started
+  if (userName) {
+    renderMissions();
+
+  }
+}
+
+// ── DATA ────────────────────────────────────────────────────
+const MISSIONS = [
+  { id:'b1', cat:'B', pts:20,
+    text:  { ja:'セッション「社会を動かす問いと変化のつくり方」に参加した', en:'Attended the session "Creating Questions and Change That Move Society"' },
+    note:  { ja:'セッション終了時にスクリーンに表示されるQRをスキャン', en:'Scan the QR shown on screen at the end of the session' },
+    mode:'qr' },
+  { id:'b2', cat:'B', pts:15,
+    text:  { ja:'学生団体「Business Contest KING 実行委員会」のブースに訪れた', en:'Visited the "Business Contest KING" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'c1', cat:'C', pts:20,
+    text:      { ja:'ITAMAEから合言葉をもらう', en:'Get the secret word from ITAMAE' },
+    note:      { ja:'ITAMAEメンバーに声をかけて合言葉をもらおう', en:'Talk to an ITAMAE member to get the secret word' },
+    mode:'keyword',
+    question:  { ja:'合言葉を入力してください', en:'Enter the secret word' },
+    placeholder:{ ja:'合言葉', en:'Secret word' },
+    hint:      { ja:'ITAMAEメンバーに聞いてみよう', en:'Ask an ITAMAE member!' },
+    answers:['ありがとう'] },
+];
+
+// helper to get localized field
+function mText(m, field) {
+  const val = m[field];
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  return val[lang] || val.ja || '';
+}
+
+const REWARDS = [
+  { threshold:1, label:{ ja:'1クリア', en:'1 Done' }, icon:'🎖️' },
+  { threshold:2, label:{ ja:'2クリア', en:'2 Done' }, icon:'🏅' },
+  { threshold:3, label:{ ja:'全達成！', en:'All Done!' }, icon:'🏆' },
+];
+
+const CAT_CONFIG = {
+  A:{ label:{ ja:'カテゴリA：つながるミッション', en:'Category A: Connect' }, color:'var(--cat-a)' },
+  B:{ label:{ ja:'カテゴリB：SusHi Tech Tokyo探索ミッション', en:'Category B: Explore SusHi Tech Tokyo' }, color:'var(--cat-b)' },
+  C:{ label:{ ja:'カテゴリC：合言葉ミッション', en:'Category C: Secret Word' }, color:'var(--cat-c)' },
+};
+
+// ── STATE ────────────────────────────────────────────────────
+let userId=null, userName='', userOrg='', cleared={};
+let fbUrl = localStorage.getItem('itamae_fb_url') || 'https://itamae-mission-default-rtdb.asia-southeast1.firebasedatabase.app';
+let appUrl = localStorage.getItem('itamae_app_url') || (location.origin + location.pathname.replace(/admin\.html$/, ''));
+
+// ── FIREBASE ─────────────────────────────────────────────────
+function fbReq(path, method, data) {
+  if (!fbUrl) return Promise.resolve(null);
+  const url = fbUrl.replace(/\/$/,'') + path + '.json';
+  const opts = { method, headers:{'Content-Type':'application/json'} };
+  if (data !== undefined) opts.body = JSON.stringify(data);
+  return fetch(url, opts).then(r=>r.json()).catch(()=>null);
+}
+const fbGet = p => fbReq(p,'GET');
+const fbSet = (p,d) => fbReq(p,'PUT',d);
+
+// ── CONFIG ────────────────────────────────────────────────────
+function toggleConfig() {
+  const f = document.getElementById('config-fields');
+  const a = document.getElementById('config-arrow');
+  f.classList.toggle('open');
+  a.textContent = f.classList.contains('open') ? '▲' : '▼';
+}
+function saveConfig() {
+  fbUrl  = document.getElementById('fb-url').value.trim();
+  appUrl = document.getElementById('app-url').value.trim() || appUrl;
+  localStorage.setItem('itamae_fb_url', fbUrl);
+  localStorage.setItem('itamae_app_url', appUrl);
+  showToast('設定を保存しました');
+}
+if (fbUrl)  document.getElementById('fb-url').value  = fbUrl;
+if (appUrl) document.getElementById('app-url').value = appUrl;
+
+// ── QR URL PARSING ────────────────────────────────────────────
+function getQrParam() {
+  const p = new URLSearchParams(location.search);
+  return p.get('mission'); // e.g. ?mission=a1
+}
+
+// on load: check if arrived via QR
+window.addEventListener('DOMContentLoaded', async () => {
+  // loadMissionSettings は失敗してもスタート画面には必ず進む
+  try { await loadMissionSettings(); } catch(e) { console.warn('settings load failed', e); }
+
+  const mId = getQrParam();
+  if (mId) {
+    const m = MISSIONS.find(x => x.id === mId);
+    if (m) {
+      showScreen('qr-land');
+      const cfg = CAT_CONFIG[m.cat];
+      document.getElementById('qrl-title').textContent = mText(m,'text');
+      document.getElementById('qrl-sub').style.color = cfg.color;
+      document.getElementById('qrl-sub').textContent = (typeof cfg.label==='object'?cfg.label.ja:cfg.label) + '  ＋' + m.pts + 'pt';
+      return;
+    }
+  }
+  applyLang(); // apply saved language preference
+  showScreen('register');
+});
+
+function showRegister() { showScreen('register'); }
+
+async function qrLandClear() {
+  const name = document.getElementById('qrl-name').value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+  const mId = getQrParam();
+  const m = MISSIONS.find(x => x.id === mId);
+  if (!m) return;
+
+  const now = new Date();
+  const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  // find or create user by name
+  let uid = null;
+  if (fbUrl) {
+    const all = await fbGet('/users');
+    if (all) {
+      const match = Object.entries(all).find(([k,v]) => v.name === name);
+      if (match) uid = match[0];
+    }
+  }
+  if (!uid) uid = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+  let userCleared = {};
+  if (fbUrl) {
+    const existing = await fbGet('/users/' + uid + '/cleared');
+    if (existing) userCleared = existing;
+  }
+
+  if (userCleared[mId]) {
+    showToast('このミッションは既にクリア済みです！');
+    setTimeout(() => { window.location.href = appUrl; }, 1500);
+    return;
+  }
+
+  userCleared[mId] = ts;
+  if (fbUrl) {
+    await fbSet('/users/' + uid, { name, org:'—', cleared:userCleared, registeredAt:Date.now() });
+  }
+
+  // show success
+  document.getElementById('screen-qr-land').innerHTML = `
+    <div style="text-align:center;padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1rem">
+      <div style="font-size:4rem">🎉</div>
+      <div style="font-size:1.6rem;font-weight:900">ミッションクリア！</div>
+      <div style="font-size:.9rem;color:var(--muted)">${name}さん ＋${m.pts}pt獲得</div>
+      <div style="font-size:.85rem;color:var(--muted);line-height:1.6">${mText(m,'text')}</div>
+      <a href="${appUrl}" style="display:inline-block;background:var(--accent);color:white;padding:.85rem 2rem;border-radius:10px;font-weight:700;font-size:.95rem;text-decoration:none;margin-top:.5rem">
+        ミッション一覧へ →
+      </a>
+    </div>
+  `;
+}
+
+// ── START ─────────────────────────────────────────────────────
+async function startMission() {
+  const name = document.getElementById('input-name').value.trim();
+  if (!name) { alert(t('名前を入力してください','Please enter your name')); return; }
+
+  userName = name; userOrg = '—';
+  userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+  if (fbUrl) {
+    try {
+      const all = await fbGet('/users');
+      if (all) {
+        const match = Object.entries(all).find(([k,v]) => v.name===name && v.org===(org||'—'));
+        if (match) { userId=match[0]; cleared=match[1].cleared||{}; }
+      }
+      await fbSet('/users/'+userId, { name:userName, org:userOrg, cleared, registeredAt:Date.now() });
+    } catch(e) { console.warn('Firebase error', e); }
+  }
+
+  document.getElementById('disp-name').textContent = userName;
+  document.getElementById('nav-tab').style.display = 'flex';
+  renderMissions();
+  showScreen('missions');
+}
+
+// ── MODAL (旧・未使用) ───────────────────────────────────────
+let pendingId = null;
+function openModal(id) {}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+async function confirmMission() {}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+async function loadAdmin() {
+  if (!fbUrl) {
+    document.getElementById('ranking-list').innerHTML = '<div style="color:var(--muted);font-size:.8rem">Firebase未接続</div>';
+    return;
+  }
+  const all = await fbGet('/users');
+  if (!all) return;
+  const users = Object.values(all);
+  let totalClears=0, fullCount=0;
+
+  const validUsers = users.filter(u => u.name);
+  const ranked = validUsers.map(u=>{
+    const n = Object.keys(u.cleared||{}).length;
+    const pts = Object.keys(u.cleared||{}).reduce((s,id)=>{
+      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
+    },0);
+    totalClears+=n; if(n===MISSIONS.length) fullCount++;
+    return {name:u.name||'—', org:u.org||'—', n, pts};
+  }).sort((a,b)=>b.pts-a.pts||b.n-a.n).slice(0,10);
+
+  document.getElementById('a-total').textContent  = validUsers.length;
+  document.getElementById('a-clears').textContent = totalClears;
+  document.getElementById('a-full').textContent   = fullCount;
+
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('ranking-list').innerHTML = ranked.length ? ranked.map((u,i)=>`
+    <div class="ranking-row">
+      <div class="rank-num ${i<3?'top':''}">${i<3?medals[i]:i+1}</div>
+      <div class="rank-name">${u.name}<br><span style="font-size:.7rem;color:var(--muted)">${u.n}クリア</span></div>
+      <div class="rank-score">${u.pts}pt</div>
+    </div>
+  `).join('') : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem">まだデータがありません</div>';
+
+  const mCounts={};
+  validUsers.forEach(u=>Object.keys(u.cleared||{}).forEach(id=>{mCounts[id]=(mCounts[id]||0)+1;}));
+  const maxC = Math.max(...Object.values(mCounts),1);
+  document.getElementById('mission-heat').innerHTML = MISSIONS.map(m=>{
+    const c=mCounts[m.id]||0;
+    const pct=(c/maxC*100).toFixed(0);
+    const cfg=CAT_CONFIG[m.cat];
+    const label = typeof m.text==='object' ? m.text.ja||'' : m.text;
+    return `
+      <div class="mission-heat-row">
+        <div style="font-size:.7rem;color:${cfg.color};width:16px">●</div>
+        <div style="flex:1;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</div>
+        <div class="heat-bar-wrap"><div class="heat-bar" style="width:${pct}%;background:${cfg.color}"></div></div>
+        <div class="heat-count">${c}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildQrGrid() {
+  const qrMissions = MISSIONS.filter(m=>m.mode==='qr');
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  qrMissions.forEach(m=>{
+    const url = appUrl.replace(/\/$/,'') + '?mission=' + m.id;
+    const cfg = CAT_CONFIG[m.cat];
+
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    card.innerHTML = `
+      <div class="qr-card-cat" style="color:${cfg.color}">${typeof cfg.label==='object'?cfg.label.ja:cfg.label}</div>
+      <div class="qr-card-title">${mText(m,'text')}</div>
+      <div class="qr-card-title" style="color:var(--accent2);font-family:'Space Mono',monospace">+${m.pts}pt</div>
+      <div class="qr-code-wrap" id="qr-${m.id}"></div>
+      <div class="qr-url">${url}</div>
+    `;
+    grid.appendChild(card);
+
+    // generate QR
+    setTimeout(()=>{
+      new QRCode(document.getElementById('qr-'+m.id), {
+        text: url,
+        width: 200, height: 200,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }, 50);
+  });
+}
+
+function switchAdminTab(tab) {
+  ['stats','qr','settings'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', tab===t);
+  });
+  document.getElementById('panel-stats').style.display    = tab==='stats'    ? 'block' : 'none';
+  document.getElementById('panel-qr').style.display       = tab==='qr'       ? 'block' : 'none';
+  document.getElementById('panel-settings').style.display = tab==='settings' ? 'block' : 'none';
+  if (tab==='qr')       buildQrGrid();
+  if (tab==='stats')    loadAdmin();
+  if (tab==='settings') { renderSettingsPanel(); loadCustomMissionsList(); }
+}
+
+// ── MISSION SETTINGS ─────────────────────────────────────────
+// missionSettings: overrides applied on top of MISSIONS default
+// shape: { [missionId]: { type:'keyword'|'freeform'|'minlength', answers:[], minLength:3, question:'', hint:'', placeholder:'' } }
+let missionSettings = {};
+
+async function loadMissionSettings() {
+  // try Firebase first
+  if (fbUrl) {
+    const saved = await fbGet('/settings/missions');
+    if (saved) { missionSettings = saved; return; }
+  }
+  // fallback: localStorage
+  const ls = localStorage.getItem('itamae_mission_settings');
+  if (ls) { try { missionSettings = JSON.parse(ls); } catch(e) {} }
+}
+
+async function saveSettings() {
+  // read form values
+  const kwMissions = MISSIONS.filter(m => m.mode === 'keyword');
+  kwMissions.forEach(m => {
+    const type       = document.getElementById('st-type-'+m.id)?.value || 'freeform';
+    const answersRaw = document.getElementById('st-answers-'+m.id)?.value || '';
+    const minLen     = parseInt(document.getElementById('st-minlen-'+m.id)?.value) || 3;
+    const question   = document.getElementById('st-question-'+m.id)?.value.trim() || m.question;
+    const hint       = document.getElementById('st-hint-'+m.id)?.value.trim() || m.hint;
+    const placeholder= document.getElementById('st-placeholder-'+m.id)?.value.trim() || m.placeholder;
+
+    missionSettings[m.id] = {
+      type, minLength: minLen,
+      answers: answersRaw.split(/[,、\n]/).map(s=>s.trim()).filter(Boolean),
+      question, hint, placeholder
+    };
+  });
+
+  if (fbUrl) {
+    await fbSet('/settings/missions', missionSettings);
+  }
+  localStorage.setItem('itamae_mission_settings', JSON.stringify(missionSettings));
+  document.getElementById('settings-saved').textContent = '✓ 保存しました';
+  setTimeout(() => { document.getElementById('settings-saved').textContent = ''; }, 2500);
+}
+
+function getMissionConfig(m) {
+  // merge default + override
+  const ov = missionSettings[m.id] || {};
+  return {
+    type:        ov.type        || (m.answers ? 'keyword' : m.minLength ? 'minlength' : 'freeform'),
+    answers:     ov.answers     || m.answers     || [],
+    minLength:   ov.minLength   || m.minLength   || 3,
+    question:    ov.question    || m.question    || m.text,
+    hint:        ov.hint        || m.hint        || m.note,
+    placeholder: ov.placeholder || m.placeholder || '入力してください',
+  };
+}
+
+function renderSettingsPanel() {
+  const kwMissions = MISSIONS.filter(m => m.mode === 'keyword');
+  const container  = document.getElementById('settings-cards');
+  container.innerHTML = kwMissions.map(m => {
+    const cfg = getMissionConfig(m);
+    const catColor = CAT_CONFIG[m.cat].color;
+    return `
+      <div class="setting-card">
+        <div class="setting-card-title" style="color:${catColor}">${mText(m,'text')}</div>
+        <div class="setting-card-sub">+${m.pts}pt</div>
+
+        <div class="setting-row">
+          <div class="setting-label">判定方式</div>
+          <select class="setting-select" id="st-type-${m.id}" onchange="onTypeChange('${m.id}')">
+            <option value="freeform"  ${cfg.type==='freeform' ?'selected':''}>自由入力（何でもOK）</option>
+            <option value="minlength" ${cfg.type==='minlength'?'selected':''}>最小文字数</option>
+            <option value="keyword"   ${cfg.type==='keyword'  ?'selected':''}>合言葉一致</option>
+          </select>
+        </div>
+
+        <div class="setting-sub-row ${cfg.type==='minlength'?'visible':''}" id="sr-minlen-${m.id}">
+          <div class="setting-label">最小文字数</div>
+          <input class="setting-input" id="st-minlen-${m.id}" type="number" min="1" max="50" value="${cfg.minLength}" style="width:80px;flex:none" />
+          <span style="font-size:.78rem;color:var(--muted)">文字以上</span>
+        </div>
+
+        <div class="setting-sub-row ${cfg.type==='keyword'?'visible':''}" id="sr-answers-${m.id}">
+          <div class="setting-label">合言葉</div>
+          <div style="flex:1">
+            <input class="setting-input" id="st-answers-${m.id}" type="text"
+              placeholder="複数ある場合はカンマ区切り"
+              value="${cfg.answers.join(', ')}" style="width:100%" />
+            <div class="setting-hint-text" style="margin-top:.4rem">例: itamae2026, ITAMAE2026（大文字小文字は区別しません）</div>
+          </div>
+        </div>
+
+        <div class="setting-row" style="margin-top:.5rem">
+          <div class="setting-label">質問文</div>
+          <input class="setting-input" id="st-question-${m.id}" type="text" value="${escHtml(cfg.question)}" />
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">ヒント</div>
+          <input class="setting-input" id="st-hint-${m.id}" type="text" value="${escHtml(cfg.hint)}" />
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">プレース</div>
+          <input class="setting-input" id="st-placeholder-${m.id}" type="text" value="${escHtml(cfg.placeholder)}" />
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function onTypeChange(mId) {
+  const type = document.getElementById('st-type-'+mId).value;
+  document.getElementById('sr-minlen-'+mId).classList.toggle('visible', type==='minlength');
+  document.getElementById('sr-answers-'+mId).classList.toggle('visible', type==='keyword');
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+// ── SCANNER ──────────────────────────────────────────────────
+let scannerStream = null;
+let scannerAnimId = null;
+let scannerTargetId = null;
+let scannerActive = false;
+
+function openScanner(missionId) {
+  scannerTargetId = missionId;
+  scannerActive = true;
+  document.getElementById('scanner-overlay').classList.add('open');
+  startCamera();
+}
+
+function closeScanner() {
+  scannerActive = false;
+  document.getElementById('scanner-overlay').classList.remove('open');
+  stopCamera();
+  scannerTargetId = null;
+}
+
+function stopCamera() {
+  if (scannerAnimId) { cancelAnimationFrame(scannerAnimId); scannerAnimId = null; }
+  if (scannerStream) { scannerStream.getTracks().forEach(t=>t.stop()); scannerStream = null; }
+  const v = document.getElementById('scanner-video');
+  v.srcObject = null;
+}
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'environment', width:{ideal:640}, height:{ideal:640} }
+    });
+    scannerStream = stream;
+    const video = document.getElementById('scanner-video');
+    video.srcObject = stream;
+    video.play();
+    video.addEventListener('loadedmetadata', () => { scanFrame(); }, { once:true });
+  } catch(e) {
+    showToast(t('カメラへのアクセスを許可してください', 'Please allow camera access'));
+    closeScanner();
+  }
+}
+
+function scanFrame() {
+  if (!scannerActive) return;
+  const video  = document.getElementById('scanner-video');
+  const canvas = document.getElementById('scanner-canvas');
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+    scannerAnimId = requestAnimationFrame(scanFrame);
+    return;
+  }
+  const size = Math.min(video.videoWidth, video.videoHeight);
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const ox = (video.videoWidth  - size) / 2;
+  const oy = (video.videoHeight - size) / 2;
+  ctx.drawImage(video, ox, oy, size, size, 0, 0, size, size);
+  const imageData = ctx.getImageData(0, 0, size, size);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+
+  if (code && code.data) {
+    handleQrResult(code.data);
+    return;
+  }
+  scannerAnimId = requestAnimationFrame(scanFrame);
+}
+
+async function handleQrResult(rawUrl) {
+  stopCamera();
+  // parse mission id from URL
+  let mId = null;
+  try {
+    const u = new URL(rawUrl);
+    mId = u.searchParams.get('mission');
+  } catch(e) {
+    // not a URL — ignore
+  }
+
+  const expected = scannerTargetId;
+
+  // flash green
+  const overlay = document.getElementById('scanner-overlay');
+  const flash = document.createElement('div');
+  flash.className = 'scanner-success';
+  flash.innerHTML = '<span style="font-size:3rem">✓</span>';
+  overlay.appendChild(flash);
+  setTimeout(() => flash.remove(), 400);
+
+  await new Promise(r => setTimeout(r, 500));
+  closeScanner();
+
+  if (!mId) { showToast('このQRはミッション用ではありません'); return; }
+
+  if (expected && mId !== expected) {
+    showToast('別のミッションのQRです');
+    return;
+  }
+
+  const m = MISSIONS.find(x => x.id === mId);
+  if (!m) { showToast('ミッションが見つかりません'); return; }
+  if (cleared[mId]) { showToast('このミッションは既にクリア済みです！'); return; }
+
+  // clear mission
+  const now = new Date();
+  const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  cleared[mId] = ts;
+  if (fbUrl) await fbSet('/users/'+userId+'/cleared', cleared);
+  renderMissions();
+  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +' + m.pts + 'pt');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function enterAdmin() {
+  showScreen('admin');
+  switchAdminTab('stats');
+  loadAdmin();
+}
+function switchTab(tab) {
+  switchAdminTab(tab);
+}
+
+// ── REALTIME RANKING ─────────────────────────────────────────
+let rankingListenerActive = false;
+let rankingPollTimer = null;
+
+function startRankingListener() {
+  if (!fbUrl) {
+    document.getElementById('ranking-loading').textContent = 'Firebase未接続のためランキングは表示されません';
+    document.getElementById('ranking-loading').style.display = 'block';
+    return;
+  }
+  document.getElementById('ranking-loading').style.display = 'none';
+
+  // Firebase REST APIはリアルタイムストリーミング（SSE）をサポート
+  // ただしシンプルにするため30秒ポーリングで実装
+  if (rankingListenerActive) return;
+  rankingListenerActive = true;
+  renderPublicRanking(); // 即時実行
+  rankingPollTimer = setInterval(renderPublicRanking, 10000); // 10秒ごと
+}
+
+function stopRankingListener() {
+  rankingListenerActive = false;
+  if (rankingPollTimer) { clearInterval(rankingPollTimer); rankingPollTimer = null; }
+}
+
+async function renderPublicRanking() {
+  const all = await fbGet('/users');
+  if (!all) return;
+
+  const users = Object.entries(all).map(([uid, u]) => {
+    const n = Object.keys(u.cleared || {}).length;
+    const pts = Object.keys(u.cleared || {}).reduce((s, id) => {
+      const m = MISSIONS.find(x => x.id === id); return s + (m ? m.pts : 0);
+    }, 0);
+    const cats = ['A','B','C'].map(cat => {
+      const items = MISSIONS.filter(m => m.cat === cat);
+      const done  = items.filter(m => (u.cleared||{})[m.id]).length;
+      return done === items.length ? cat : null;
+    }).filter(Boolean).join('');
+    return { uid, name: u.name || '—', n, pts, cats };
+  }).sort((a,b) => b.pts - a.pts || b.n - a.n);
+
+  const top10 = users.slice(0, 10);
+  const maxPts = top10[0]?.pts || 1;
+
+  // my rank
+  const myIdx = users.findIndex(u => u.uid === userId);
+  const myRankBanner = document.getElementById('my-rank-banner');
+  if (myIdx >= 0 && userId) {
+    myRankBanner.style.display = 'flex';
+    const myUser = users[myIdx];
+    document.getElementById('my-rank-text').textContent =
+      lang === 'en'
+        ? `#${myIdx + 1} of ${users.length}`
+        : `${myIdx + 1}位 / ${users.length}人中`;
+    document.getElementById('my-rank-pts').textContent = myUser.pts + 'pt';
+  } else {
+    myRankBanner.style.display = 'none';
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('ranking-public-list').innerHTML = top10.map((u, i) => {
+    const isMe = u.uid === userId;
+    const barW = Math.round(u.pts / maxPts * 100);
+    const catBadges = u.cats ? u.cats.split('').map(c =>
+      `<span style="font-size:.6rem;background:${c==='A'?'rgba(255,107,53,.2)':c==='B'?'rgba(59,130,246,.2)':'rgba(16,185,129,.2)'};color:${c==='A'?'var(--cat-a)':c==='B'?'var(--cat-b)':'var(--cat-c)'};border-radius:4px;padding:.1rem .35rem;font-weight:700">${c}</span>`
+    ).join(' ') : '';
+    return `
+      <div class="rank-card ${isMe ? 'is-me' : ''}">
+        <div class="rank-bar" style="width:${barW}%"></div>
+        ${i < 3
+          ? `<div class="rank-medal">${medals[i]}</div>`
+          : `<div class="rank-num-plain">${i+1}</div>`}
+        <div class="rank-info">
+          <div class="rank-info-name">${u.name}</div>
+          <div class="rank-info-sub">${u.n} ${lang==='en'?'missions':'ミッションクリア'} ${catBadges}</div>
+        </div>
+        <div class="rank-pts-badge">${u.pts}pt</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── CUSTOM MISSIONS ──────────────────────────────────────────
+function onNewModeChange() {
+  const mode = document.getElementById('new-mode').value;
+  const extra = document.getElementById('new-mode-extra');
+  const rowAnswers = document.getElementById('new-row-answers');
+  const rowMinlen  = document.getElementById('new-row-minlen');
+  extra.style.display    = (mode !== 'qr' && mode !== 'freeform') ? 'block' : 'none';
+  if (rowAnswers) rowAnswers.style.display = mode === 'keyword'   ? 'flex' : 'none';
+  if (rowMinlen)  rowMinlen.style.display  = mode === 'minlength' ? 'flex' : 'none';
+}
+
+async function addCustomMission() {
+  const textJa = document.getElementById('new-text-ja').value.trim();
+  const textEn = document.getElementById('new-text-en').value.trim();
+  const cat    = document.getElementById('new-cat').value;
+  const pts    = parseInt(document.getElementById('new-pts').value) || 10;
+  const mode   = document.getElementById('new-mode').value;
+  const resultEl = document.getElementById('new-mission-result');
+
+  if (!textJa) {
+    resultEl.style.color = '#ef4444';
+    resultEl.textContent = '日本語のミッション内容を入力してください';
+    return;
+  }
+
+  const id = 'custom_' + Date.now();
+  const mission = {
+    id, cat, pts, mode, custom: true,
+    text: { ja: textJa, en: textEn || textJa },
+    note: { ja: '', en: '' },
+  };
+
+  if (mode === 'keyword') {
+    const answers = (document.getElementById('new-answers').value || '').split(/[,、]/).map(s=>s.trim()).filter(Boolean);
+    mission.answers = answers;
+  }
+  if (mode === 'minlength') {
+    mission.minLength = parseInt(document.getElementById('new-minlen').value) || 3;
+  }
+  const qJa = (document.getElementById('new-question-ja') || {}).value || '';
+  const qEn = (document.getElementById('new-question-en') || {}).value || '';
+  if (qJa.trim()) mission.question = { ja: qJa.trim(), en: qEn.trim() || qJa.trim() };
+
+  if (!fbUrl) {
+    resultEl.style.color = '#ef4444';
+    resultEl.textContent = 'Firebase未接続のため保存できません';
+    return;
+  }
+
+  try {
+    await fbSet('/custom_missions/' + id, mission);
+    resultEl.style.color = 'var(--success)';
+    resultEl.textContent = '✓ ミッションを追加しました';
+    ['new-text-ja','new-text-en','new-answers','new-question-ja','new-question-en'].forEach(elId => {
+      const el = document.getElementById(elId);
+      if (el) el.value = '';
+    });
+    document.getElementById('new-pts').value = '10';
+    loadCustomMissionsList();
+  } catch(e) {
+    resultEl.style.color = '#ef4444';
+    resultEl.textContent = '保存に失敗しました';
+  }
+}
+
+async function loadCustomMissionsList() {
+  const list = document.getElementById('custom-missions-list');
+  if (!list || !fbUrl) return;
+  try {
+    const customs = await fbGet('/custom_missions');
+    if (!customs || Object.keys(customs).length === 0) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">追加済みミッションなし</div>';
+      return;
+    }
+    list.innerHTML = Object.values(customs).map(m => {
+      const textJa = typeof m.text === 'object' ? m.text.ja : m.text;
+      const catColor = m.cat==='A' ? 'var(--cat-a)' : m.cat==='B' ? 'var(--cat-b)' : 'var(--cat-c)';
+      return `
+        <div class="setting-card" style="margin-bottom:.5rem">
+          <div style="display:flex;align-items:flex-start;gap:.75rem">
+            <div style="flex:1">
+              <div style="font-size:.75rem;color:${catColor};font-weight:700;margin-bottom:.2rem">カテゴリ${m.cat} ・ ${m.pts}pt ・ ${m.mode}</div>
+              <div style="font-size:.85rem;font-weight:700">${textJa}</div>
+              ${typeof m.text === 'object' && m.text.en ? `<div style="font-size:.72rem;color:var(--muted);margin-top:.1rem">${m.text.en}</div>` : ''}
+            </div>
+            <button onclick="deleteCustomMission('${m.id}')"
+              style="background:#ef444420;border:1px solid #ef444440;border-radius:6px;padding:.3rem .6rem;color:#ef4444;font-size:.72rem;cursor:pointer;white-space:nowrap;flex-shrink:0">
+              削除
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:#ef4444;font-size:.8rem">読み込み失敗</div>';
+  }
+}
+
+async function deleteCustomMission(id) {
+  if (!confirm('このミッションを削除しますか？')) return;
+  try {
+    await fbReq('/custom_missions/' + id, 'DELETE');
+    loadCustomMissionsList();
+  } catch(e) { alert('削除に失敗しました'); }
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>

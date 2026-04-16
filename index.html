@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ITAMAE MISSION</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #ff6b35;
+    --accent2: #ffb800;
+    --cat-a: #ff6b35;
+    --cat-b: #3b82f6;
+    --cat-c: #10b981;
+    --text: #f0f0f0;
+    --muted: #666;
+    --success: #10b981;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  .screen { display:none; min-height:100vh; flex-direction:column; }
+  .screen.active { display:flex; }
+
+  /* ── REGISTER ── */
+  #screen-register {
+    align-items:center; justify-content:center; padding:2rem;
+    position:relative; overflow:hidden;
+  }
+  #screen-register::before {
+    content:''; position:absolute;
+    width:400px; height:400px;
+    background:radial-gradient(circle,rgba(255,107,53,.15) 0%,transparent 70%);
+    top:-100px; right:-100px; pointer-events:none;
+  }
+  .register-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:2.5rem 2rem;
+    width:100%; max-width:400px;
+  }
+  .logo-block { text-align:center; margin-bottom:2rem; }
+  .logo-tag {
+    font-family:'Space Mono',monospace; font-size:.65rem;
+    letter-spacing:.2em; color:var(--accent);
+    background:rgba(255,107,53,.1); border:1px solid rgba(255,107,53,.3);
+    padding:.25rem .75rem; border-radius:100px; display:inline-block; margin-bottom:.75rem;
+  }
+  .logo-title { font-size:2.2rem; font-weight:900; letter-spacing:-.02em; line-height:1; }
+  .logo-title span { color:var(--accent); }
+  .logo-sub { font-size:.8rem; color:var(--muted); margin-top:.5rem; }
+  .form-group { margin-bottom:1.25rem; }
+  .form-label { font-size:.75rem; color:var(--muted); letter-spacing:.05em; margin-bottom:.4rem; display:block; }
+  .form-input {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:.85rem 1rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:1rem;
+    transition:border-color .2s; outline:none;
+  }
+  .form-input:focus { border-color:var(--accent); }
+  .btn-primary {
+    width:100%; background:var(--accent); color:white; border:none;
+    border-radius:10px; padding:1rem;
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:1rem; font-weight:700;
+    cursor:pointer; transition:opacity .2s,transform .1s; margin-top:.5rem;
+  }
+  .btn-primary:active { transform:scale(.98); opacity:.9; }
+
+  /* config */
+  .config-section {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:1rem; margin-bottom:1.25rem;
+  }
+  .config-toggle { font-size:.75rem; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:.4rem; user-select:none; }
+  .config-fields { display:none; margin-top:.85rem; }
+  .config-fields.open { display:block; }
+  .config-input {
+    width:100%; background:var(--bg); border:1px solid var(--border);
+    border-radius:6px; padding:.5rem .75rem; color:var(--text);
+    font-family:'Space Mono',monospace; font-size:.72rem; margin-bottom:.5rem; outline:none;
+  }
+  .btn-sm {
+    background:var(--accent); border:none; border-radius:6px;
+    padding:.4rem 1rem; color:white; font-size:.75rem; font-weight:700;
+    cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif;
+  }
+
+  /* ── MISSION SCREEN ── */
+  #screen-missions { padding:0; }
+  .mission-header {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:1rem 1.25rem; position:sticky; top:0; z-index:10;
+  }
+  .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem; }
+  .header-name { font-size:.85rem; color:var(--muted); }
+  .header-name strong { color:var(--text); }
+  .progress-bar-wrap { background:var(--surface2); border-radius:100px; height:6px; overflow:hidden; }
+  .progress-bar-fill {
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    border-radius:100px; transition:width .5s ease;
+  }
+  .progress-label { display:flex; justify-content:space-between; font-size:.7rem; color:var(--muted); margin-top:.35rem; }
+  .progress-label .count { color:var(--accent); font-weight:700; }
+
+  .reward-strip {
+    display:flex; gap:.5rem; padding:.75rem 1.25rem;
+    overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border);
+  }
+  .reward-strip::-webkit-scrollbar { display:none; }
+  .reward-badge {
+    flex-shrink:0; display:flex; align-items:center; gap:.4rem;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:.4rem .75rem; font-size:.72rem; white-space:nowrap;
+    transition:border-color .3s,background .3s;
+  }
+  .reward-badge.unlocked { border-color:var(--accent); background:rgba(255,107,53,.08); }
+  .reward-badge .rb-icon { font-size:1rem; }
+  .reward-badge .rb-count { color:var(--accent); font-weight:700; font-family:'Space Mono',monospace; }
+
+  .missions-body { padding:1rem 1.25rem; flex:1; }
+  .cat-section { margin-bottom:1.75rem; }
+  .cat-header { display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem; }
+  .cat-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .cat-title { font-size:.75rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .cat-sub { font-size:.7rem; color:var(--muted); margin-left:auto; }
+
+  .mission-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1rem; margin-bottom:.6rem;
+    display:flex; align-items:flex-start; gap:.85rem;
+    cursor:pointer; transition:border-color .2s,background .2s,transform .1s;
+    position:relative; overflow:hidden;
+  }
+  .mission-card:active { transform:scale(.99); }
+  .mission-card.done { background:rgba(16,185,129,.05); border-color:rgba(16,185,129,.3); }
+  .mission-card.done::after {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--success); border-radius:12px 0 0 12px;
+  }
+  .mission-card.qr-type { cursor:default; }
+  .mission-card.qr-type:not(.done) { opacity:.85; }
+
+  .mission-check {
+    width:28px; height:28px; border-radius:50%; border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all .2s; font-size:.9rem;
+  }
+  .mission-card.done .mission-check { background:var(--success); border-color:var(--success); }
+
+  .mission-body { flex:1; min-width:0; }
+  .mission-text { font-size:.9rem; font-weight:700; line-height:1.4; margin-bottom:.2rem; }
+  .mission-card.done .mission-text { opacity:.6; }
+  .mission-time { font-size:.68rem; color:var(--muted); font-family:'Space Mono',monospace; }
+
+  .mission-badge {
+    flex-shrink:0; align-self:center;
+    display:flex; flex-direction:column; align-items:center; gap:.15rem;
+  }
+  .badge-pts { font-family:'Space Mono',monospace; font-size:.72rem; font-weight:700; color:var(--accent2); }
+  .badge-type {
+    font-size:.6rem; padding:.15rem .4rem; border-radius:4px; font-weight:700;
+  }
+  .badge-type.qr { background:rgba(59,130,246,.15); color:#3b82f6; border:1px solid rgba(59,130,246,.3); }
+  .badge-type.self { background:rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.3); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.7); z-index:100;
+    align-items:flex-end; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-sheet {
+    background:var(--surface); border-radius:20px 20px 0 0;
+    padding:1.5rem; width:100%; max-width:480px;
+    border-top:1px solid var(--border);
+    animation:slideUp .25s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 1.25rem; }
+  .modal-title { font-size:1.1rem; font-weight:900; margin-bottom:.4rem; }
+  .modal-desc { font-size:.85rem; color:var(--muted); margin-bottom:1.25rem; line-height:1.6; }
+  .modal-note {
+    background:var(--surface2); border-radius:8px; padding:.75rem;
+    font-size:.78rem; color:var(--muted); margin-bottom:1.25rem;
+    display:flex; align-items:flex-start; gap:.5rem;
+  }
+  .modal-note::before { content:'ℹ️'; flex-shrink:0; }
+  .modal-btns { display:flex; gap:.75rem; }
+  .btn-cancel {
+    flex:1; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:.85rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.95rem; font-weight:700; cursor:pointer;
+  }
+  .btn-confirm {
+    flex:2; background:var(--success); border:none; border-radius:10px;
+    padding:.85rem; color:white;
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.95rem; font-weight:700;
+    cursor:pointer; transition:opacity .2s;
+  }
+  .btn-confirm:active { opacity:.85; }
+
+  /* ── NAV ── */
+  .nav-tab {
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--surface); border-top:1px solid var(--border);
+    display:flex; z-index:20;
+  }
+  .nav-btn {
+    flex:1; padding:.85rem; background:none; border:none; color:var(--muted);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.72rem; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:.25rem;
+    transition:color .2s;
+  }
+  .nav-btn.active { color:var(--accent); }
+  .nav-btn .nav-icon { font-size:1.25rem; }
+  .has-nav { padding-bottom:70px; }
+
+  /* ── ADMIN ── */
+  #screen-admin { padding:0; }
+  .admin-header {
+    background:#0f0f0f; border-bottom:1px solid var(--border);
+    padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:10;
+  }
+  .admin-title { font-family:'Space Mono',monospace; font-size:.85rem; font-weight:700; color:var(--accent); letter-spacing:.1em; }
+  .admin-tabs { display:flex; gap:.5rem; }
+  .admin-tab {
+    background:none; border:1px solid var(--border); border-radius:6px;
+    padding:.3rem .75rem; color:var(--muted); font-size:.72rem; cursor:pointer;
+    font-family:'Space Mono',monospace; transition:all .2s;
+  }
+  .admin-tab.active { background:var(--accent); border-color:var(--accent); color:white; }
+
+  .admin-body { padding:1rem 1.25rem; }
+  .admin-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin-bottom:1.25rem; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:.85rem .75rem; text-align:center; }
+  .stat-num { font-family:'Space Mono',monospace; font-size:1.5rem; font-weight:700; color:var(--accent); line-height:1; }
+  .stat-label { font-size:.65rem; color:var(--muted); margin-top:.25rem; }
+  .section-title { font-size:.72rem; font-weight:700; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-bottom:.75rem; margin-top:1.25rem; }
+
+  .ranking-row {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.75rem .85rem; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px; margin-bottom:.5rem;
+  }
+  .rank-num { font-family:'Space Mono',monospace; font-size:.8rem; color:var(--muted); width:20px; text-align:right; }
+  .rank-num.top { color:var(--accent2); }
+  .rank-name { flex:1; font-size:.9rem; font-weight:700; }
+  .rank-score { font-family:'Space Mono',monospace; font-size:.85rem; color:var(--accent); font-weight:700; }
+
+  .mission-heat-row {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.82rem;
+  }
+  .heat-bar-wrap { flex:1; background:var(--surface2); height:6px; border-radius:3px; overflow:hidden; }
+  .heat-bar { height:100%; border-radius:3px; transition:width .5s; }
+  .heat-count { font-family:'Space Mono',monospace; font-size:.72rem; color:var(--muted); width:30px; text-align:right; }
+
+  /* ── QR PANEL ── */
+  /* panel-qr visibility managed via inline style */
+  /* panel visibility managed via inline style by switchAdminTab */
+
+  .qr-intro {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:1rem; margin-bottom:1rem;
+    font-size:.8rem; color:var(--muted); line-height:1.7;
+  }
+  .qr-intro strong { color:var(--text); }
+
+  .qr-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; }
+
+  .qr-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1rem; text-align:center;
+  }
+  .qr-card-title { font-size:.75rem; font-weight:700; margin-bottom:.15rem; line-height:1.3; }
+  .qr-card-cat { font-size:.65rem; margin-bottom:.75rem; }
+  .qr-code-wrap { display:flex; justify-content:center; margin-bottom:.6rem; }
+  .qr-code-wrap canvas, .qr-code-wrap img { border-radius:6px; }
+  .qr-url { font-family:'Space Mono',monospace; font-size:.55rem; color:var(--muted); word-break:break-all; }
+
+  .btn-print {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:.7rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.85rem; font-weight:700;
+    cursor:pointer; margin-top:1rem;
+  }
+
+  /* toast */
+  .toast {
+    position:fixed; bottom:80px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--success); color:white;
+    padding:.6rem 1.25rem; border-radius:100px;
+    font-size:.85rem; font-weight:700;
+    opacity:0; transition:all .3s; pointer-events:none;
+    white-space:nowrap; z-index:200;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* QR scan landing */
+  #screen-qr-land {
+    align-items:center; justify-content:center; padding:2rem;
+    flex-direction:column; gap:1rem; text-align:center;
+  }
+  .qr-land-icon { font-size:3.5rem; }
+  .qr-land-title { font-size:1.6rem; font-weight:900; }
+  .qr-land-sub { font-size:.9rem; color:var(--muted); }
+  .qr-land-input {
+    width:100%; max-width:320px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:.85rem 1rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:1rem;
+    outline:none; text-align:center;
+  }
+  .qr-land-input:focus { border-color:var(--accent); }
+
+  /* lang toggle */
+  .lang-toggle {
+    display:flex; gap:.3rem; align-items:center;
+  }
+  .lang-btn {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:6px; padding:.25rem .55rem;
+    font-size:.72rem; font-weight:700; cursor:pointer;
+    color:var(--muted); font-family:'Space Mono',monospace;
+    transition:all .15s;
+  }
+  .lang-btn.active {
+    background:var(--accent); border-color:var(--accent); color:white;
+  }
+
+  /* pulse for live dot */
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.4; transform:scale(1.4); }
+  }
+
+  /* ranking cards */
+  .rank-card {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.85rem 1rem;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; margin-bottom:.5rem;
+    transition:border-color .3s;
+    position:relative; overflow:hidden;
+  }
+  .rank-card.is-me {
+    border-color:var(--accent);
+    background:rgba(255,107,53,.06);
+  }
+  .rank-card.is-me::before {
+    content:'あなた';
+    position:absolute; top:0; right:0;
+    background:var(--accent); color:white;
+    font-size:.6rem; font-weight:700;
+    padding:.15rem .5rem;
+    border-radius:0 12px 0 8px;
+  }
+  .rank-medal { font-size:1.3rem; width:28px; text-align:center; flex-shrink:0; }
+  .rank-num-plain {
+    font-family:'Space Mono',monospace; font-size:.85rem;
+    color:var(--muted); width:28px; text-align:center; flex-shrink:0;
+  }
+  .rank-info { flex:1; min-width:0; }
+  .rank-info-name { font-size:.9rem; font-weight:700; }
+  .rank-info-sub { font-size:.68rem; color:var(--muted); margin-top:.1rem; }
+  .rank-pts-badge {
+    font-family:'Space Mono',monospace; font-size:.85rem;
+    font-weight:700; color:var(--accent2); flex-shrink:0;
+  }
+  .rank-bar {
+    position:absolute; left:0; top:0; bottom:0;
+    background:rgba(255,184,0,.05);
+    transition:width .6s ease;
+    pointer-events:none;
+  }
+
+  /* keyword shake animation */
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+  .shake { animation:shake .35s ease; }
+
+  /* ── SCANNER MODAL ── */
+  .scanner-overlay {
+    display:none; position:fixed; inset:0;
+    background:#000; z-index:200;
+    flex-direction:column; align-items:center; justify-content:center;
+  }
+  .scanner-overlay.open { display:flex; }
+
+  .scanner-header {
+    position:absolute; top:0; left:0; right:0;
+    padding:1rem 1.25rem;
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(to bottom, rgba(0,0,0,.8), transparent);
+    z-index:10;
+  }
+  .scanner-title { font-size:.9rem; font-weight:700; color:white; }
+  .scanner-close {
+    background:rgba(255,255,255,.15); border:none; border-radius:50%;
+    width:36px; height:36px; color:white; font-size:1.1rem;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+
+  .scanner-viewport { position:relative; width:100%; max-width:400px; }
+
+  #scanner-video {
+    width:100%; aspect-ratio:1;
+    object-fit:cover; display:block;
+  }
+
+  .scanner-frame {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+
+  .scanner-box {
+    width:65%; aspect-ratio:1;
+    position:relative;
+  }
+
+  .scanner-box::before, .scanner-box::after,
+  .scanner-box .c3, .scanner-box .c4 {
+    content:''; position:absolute;
+    width:24px; height:24px; border-color:var(--accent); border-style:solid;
+  }
+  .scanner-box::before { top:0; left:0; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+  .scanner-box::after  { top:0; right:0; border-width:3px 3px 0 0; border-radius:0 4px 0 0; }
+  .scanner-box .c3 { bottom:0; left:0; border-width:0 0 3px 3px; border-radius:0 0 0 4px; }
+  .scanner-box .c4 { bottom:0; right:0; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+
+  .scanner-line {
+    position:absolute; left:17.5%; right:17.5%; height:2px;
+    background:linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation:scanLine 2s ease-in-out infinite;
+    top:17.5%;
+  }
+  @keyframes scanLine {
+    0%   { top:17.5%; opacity:1; }
+    90%  { top:82.5%; opacity:1; }
+    100% { top:17.5%; opacity:0; }
+  }
+
+  .scanner-hint {
+    position:absolute; bottom:0; left:0; right:0;
+    padding:1.5rem 1.25rem 2rem;
+    background:linear-gradient(to top, rgba(0,0,0,.8), transparent);
+    text-align:center;
+  }
+  .scanner-hint p { font-size:.85rem; color:rgba(255,255,255,.7); }
+
+  .scanner-success {
+    position:absolute; inset:0;
+    background:rgba(16,185,129,.15);
+    display:flex; align-items:center; justify-content:center;
+    animation:flashGreen .4s ease;
+    pointer-events:none;
+  }
+  @keyframes flashGreen {
+    0%   { opacity:0; }
+    30%  { opacity:1; }
+    100% { opacity:0; }
+  }
+
+  /* scan button on mission card */
+  .btn-scan-qr {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:#3b82f6; border:none;
+    border-radius:8px; padding:.5rem .9rem;
+    color:white; font-size:.8rem; font-weight:700;
+    cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif;
+    margin-top:.5rem; transition:opacity .15s, transform .1s;
+    box-shadow: 0 2px 8px rgba(59,130,246,.4);
+  }
+  .btn-scan-qr:active { opacity:.85; transform:scale(.97); }
+
+  /* keyword button on mission card */
+  .btn-keyword {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:var(--cat-c); border:none;
+    border-radius:8px; padding:.5rem .9rem;
+    color:white; font-size:.8rem; font-weight:700;
+    cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif;
+    margin-top:.5rem; transition:opacity .15s, transform .1s;
+    box-shadow: 0 2px 8px rgba(16,185,129,.4);
+  }
+  .btn-keyword:active { opacity:.85; transform:scale(.97); }
+
+  /* ── SETTINGS PANEL ── */
+  .setting-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1rem; margin-bottom:.85rem;
+  }
+  .setting-card-title {
+    font-size:.85rem; font-weight:700; margin-bottom:.15rem;
+  }
+  .setting-card-sub {
+    font-size:.72rem; color:var(--muted); margin-bottom:.85rem;
+  }
+  .setting-row {
+    display:flex; align-items:center; gap:.6rem; margin-bottom:.6rem;
+  }
+  .setting-label {
+    font-size:.72rem; color:var(--muted); width:80px; flex-shrink:0;
+  }
+  .setting-select {
+    flex:1; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:.45rem .6rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.82rem; outline:none;
+  }
+  .setting-input {
+    flex:1; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:.45rem .6rem; color:var(--text);
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:.82rem; outline:none;
+  }
+  .setting-input:focus, .setting-select:focus { border-color:var(--accent); }
+  .setting-sub-row { display:none; }
+  .setting-sub-row.visible { display:flex; }
+  .setting-hint-text {
+    font-size:.72rem; color:var(--muted); margin-bottom:.6rem;
+    padding:.5rem .75rem; background:var(--surface2); border-radius:6px;
+  }
+
+  @media print {
+    .nav-tab, .admin-header, #panel-stats, .btn-print, .admin-tabs, .qr-intro { display:none!important; }
+    body { background:white; color:black; }
+    .qr-card { border:1px solid #ccc; break-inside:avoid; }
+    .qr-grid { grid-template-columns:repeat(3,1fr); }
+    .qr-card-title,.qr-card-cat,.qr-url { color:#333; }
+  }
+</style>
+</head>
+<body>
+
+<!-- REGISTER -->
+<div id="screen-register" class="screen active">
+  <div class="register-card">
+    <div class="logo-block">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.5rem">
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="ja" onclick="setLang('ja')">JA</button>
+          <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        </div>
+      </div>
+      <div class="logo-tag">SusHi Tech Tokyo 2026</div>
+      <div class="logo-title">ITAMAE<br><span>MISSION</span></div>
+      <div class="logo-sub" data-ja="ミッションをクリアして特典をゲットしよう" data-en="Complete missions and earn rewards!">ミッションをクリアして特典をゲットしよう</div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-toggle" onclick="toggleConfig()">
+        ⚙️ Firebase設定（管理者のみ）<span id="config-arrow">▼</span>
+      </div>
+      <div class="config-fields" id="config-fields">
+        <input class="config-input" id="fb-url" placeholder="https://xxx.firebaseio.com" />
+        <input class="config-input" id="app-url" placeholder="このアプリのURL（QR生成用）例: https://itamae.github.io" />
+        <button class="btn-sm" onclick="saveConfig()">保存</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" data-ja="あなたの名前" data-en="Your Name">あなたの名前</label>
+      <input class="form-input" id="input-name" type="text" placeholder="例：田中みらの" maxlength="20" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="Instagram（任意）" data-en="Instagram (optional)">Instagram（任意）</label>
+      <div style="display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;gap:.5rem">
+        <span style="color:var(--muted);font-size:.9rem">@</span>
+        <input class="form-input"
+          id="input-instagram"
+          type="text"
+          placeholder="username"
+          maxlength="30"
+          style="background:none;border:none;padding:0;flex:1" />
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-start" onclick="startMission()">ミッションをスタート →</button>
+  </div>
+</div>
+
+<!-- QR LANDING (スキャン後に飛んでくる画面) -->
+<div id="screen-qr-land" class="screen">
+  <div class="qr-land-icon">📍</div>
+  <div class="qr-land-title" id="qrl-title"></div>
+  <div class="qr-land-sub" id="qrl-sub"></div>
+  <div style="font-size:.8rem;color:var(--muted);margin-top:.5rem">名前を入力してクリア！</div>
+  <input class="qr-land-input" id="qrl-name" type="text" placeholder="あなたの名前" maxlength="20" />
+  <button class="btn-primary" style="max-width:320px;width:100%" onclick="qrLandClear()">✓ クリア！</button>
+  <button style="background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;margin-top:.5rem" onclick="showRegister()">← ログイン画面へ</button>
+</div>
+
+<!-- MISSIONS -->
+<div id="screen-missions" class="screen has-nav">
+
+  <!-- ヘッダー（進捗バー・ポイント） -->
+  <div class="mission-header">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:.5rem">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="ja" onclick="setLang('ja')">JA</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+    <div class="header-top">
+      <div class="header-name">👋 <strong id="disp-name"></strong><span id="disp-name-suffix" data-ja="さんのミッション" data-en="'s Missions">さんのミッション</span></div>
+      <div style="font-family:'Space Mono',monospace;font-size:.72rem;color:var(--accent)" id="disp-pts">0pt</div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-label">
+      <span data-ja="進捗" data-en="Progress">進捗</span>
+      <span><span class="count" id="prog-count">0</span> / <span id="prog-total"></span> <span data-ja="クリア" data-en="cleared">クリア</span></span>
+    </div>
+  </div>
+
+  <!-- 特典バッジ -->
+  <div class="reward-strip" id="reward-strip"></div>
+
+  <!-- ミッション一覧 -->
+  <div class="missions-body" id="missions-body"></div>
+</div>
+
+<!-- MY QR SCREEN -->
+<div id="screen-myqr" class="screen has-nav">
+  <div class="mission-header">
+    <div class="header-top">
+      <div style="font-size:.9rem;font-weight:700">
+        👤 <span data-ja="マイQRコード" data-en="My QR Code">マイQRコード</span>
+      </div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="ja" onclick="setLang('ja')">JA</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </div>
+  <div style="padding:1.5rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem">
+
+    <!-- 自分のQR -->
+    <div style="background:white;border-radius:16px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:.75rem;width:fit-content">
+      <div id="my-qr-code"></div>
+      <div style="font-size:.8rem;color:#333;font-weight:700" id="my-qr-name"></div>
+    </div>
+
+    <!-- 出会った人数 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 2rem;text-align:center;width:100%">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:.25rem"
+        data-ja="出会ったボランティア" data-en="Volunteers Met">出会ったボランティア</div>
+      <div id="met-count" style="font-family:'Space Mono',monospace;font-size:2.5rem;font-weight:700;color:var(--accent)">0</div>
+      <div style="font-size:.72rem;color:var(--muted)" data-ja="人" data-en="people">人</div>
+    </div>
+
+    <!-- 出会ったボランティア一覧 -->
+    <div style="width:100%">
+      <div class="section-title"
+        data-ja="出会ったボランティア一覧" data-en="People You Met">出会ったボランティア一覧</div>
+      <div id="met-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen has-nav">
+  <div class="admin-header">
+    <div class="admin-title">ADMIN</div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" id="tab-stats" onclick="switchAdminTab('stats')">統計</button>
+      <button class="admin-tab" id="tab-qr" onclick="switchAdminTab('qr')">QR印刷</button>
+      <button class="admin-tab" id="tab-settings" onclick="switchAdminTab('settings')">⚙️設定</button>
+    </div>
+  </div>
+  <div class="admin-body">
+
+    <!-- STATS PANEL -->
+    <div id="panel-stats">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
+        <button class="admin-tab" style="font-size:.72rem" onclick="loadAdmin()">↻ 更新</button>
+      </div>
+      <div class="admin-stats">
+        <div class="stat-card"><div class="stat-num" id="a-total">0</div><div class="stat-label">参加者</div></div>
+        <div class="stat-card"><div class="stat-num" id="a-clears">0</div><div class="stat-label">総クリア</div></div>
+        <div class="stat-card"><div class="stat-num" id="a-full">0</div><div class="stat-label">全達成</div></div>
+      </div>
+      <div class="section-title">🏆 ランキング TOP10</div>
+      <div id="ranking-list"></div>
+      <div class="section-title">📊 ミッション別クリア数</div>
+      <div id="mission-heat"></div>
+    </div>
+
+    <!-- QR PANEL -->
+    <div id="panel-qr">
+      <div class="qr-intro">
+        <strong>QRコードの使い方</strong><br>
+        各ミッションのQRを印刷して会場に設置してください。<br>
+        ボランティアがスキャンすると名前入力画面が開き、クリア記録されます。<br>
+        カテゴリCは自己申告のため QR なし。
+      </div>
+      <div class="qr-grid" id="qr-grid"></div>
+      <button class="btn-print" onclick="window.print()">🖨️ 印刷する</button>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="panel-settings" style="display:none">
+      <div class="qr-intro" style="margin-bottom:1rem">
+        <strong>カテゴリC 入力判定の設定</strong><br>
+        各ミッションの判定方式・合言葉・最小文字数を変更できます。<br>
+        設定はFirebase（または端末）に保存されます。
+      </div>
+      <div id="settings-cards"></div>
+      <button class="btn-primary" style="margin-top:1rem" onclick="saveSettings()">💾 設定を保存</button>
+      <div id="settings-saved" style="text-align:center;font-size:.78rem;color:var(--success);margin-top:.6rem;min-height:1.2em"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RANKING SCREEN -->
+<div id="screen-ranking" class="screen has-nav">
+  <div class="mission-header" style="padding-bottom:.75rem">
+    <div class="header-top">
+      <div style="font-size:.9rem;font-weight:700">🏆 <span data-ja="リアルタイムランキング" data-en="Live Ranking">リアルタイムランキング</span></div>
+      <div id="rank-live-dot" style="display:flex;align-items:center;gap:.35rem;font-size:.68rem;color:var(--success)">
+        <span style="width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;animation:pulse 1.5s infinite"></span>LIVE
+      </div>
+    </div>
+  </div>
+  <div style="padding:1rem 1.25rem;flex:1;overflow-y:auto">
+    <div id="my-rank-banner" style="display:none;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem">
+      <div style="font-size:1.4rem">👤</div>
+      <div style="flex:1">
+        <div style="font-size:.72rem;color:var(--muted)" data-ja="あなたの順位" data-en="Your Rank">あなたの順位</div>
+        <div id="my-rank-text" style="font-size:1rem;font-weight:900;color:var(--accent)"></div>
+      </div>
+      <div id="my-rank-pts" style="font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent)"></div>
+    </div>
+    <div id="ranking-public-list"></div>
+    <div id="ranking-loading" style="text-align:center;color:var(--muted);font-size:.85rem;padding:2rem">
+      Firebase未接続のためランキングは表示されません
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-tab" id="nav-tab" style="display:none">
+  <button class="nav-btn active" id="nav-missions" onclick="switchTab('missions')">
+    <span class="nav-icon">🤝</span><span data-ja="つながる" data-en="Connect">つながる</span>
+  </button>
+  <button class="nav-btn" id="nav-myqr" onclick="switchTab('myqr')">
+    <span class="nav-icon">👤</span><span data-ja="友達リスト" data-en="Friends">友達リスト</span>
+  </button>
+  <button class="nav-btn" id="nav-ranking" onclick="switchTab('ranking')">
+    <span class="nav-icon">🏆</span><span data-ja="ランキング" data-en="Ranking">ランキング</span>
+  </button>
+</div>
+
+<!-- MODAL (自己申告用) -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-note" id="modal-note"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-confirm" onclick="confirmMission()">✓ クリア！</button>
+    </div>
+  </div>
+</div>
+
+<!-- KEYWORD MODAL -->
+<div class="modal-overlay" id="modal-keyword">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="kw-title"></div>
+    <div class="modal-desc" id="kw-question" style="font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.75rem"></div>
+    <div class="modal-note" id="kw-hint"></div>
+    <input class="form-input" id="kw-input" type="text" style="margin-bottom:1rem" />
+    <div id="kw-error" style="font-size:.78rem;color:#ef4444;margin-bottom:.75rem;min-height:1.2em;text-align:center"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeKeywordModal()">キャンセル</button>
+      <button class="btn-confirm" style="background:var(--cat-c)" onclick="submitKeyword()">✓ 送信</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEET SUCCESS MODAL -->
+<div class="modal-overlay" id="modal-meet">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:.5rem 0 1rem">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🤝</div>
+      <div style="font-size:1.1rem;font-weight:900;margin-bottom:.35rem"
+        data-ja="出会いを記録しました！" data-en="Connection recorded!">出会いを記録しました！</div>
+      <div id="meet-modal-ig" style="margin-top:.75rem;display:none">
+        <a id="meet-modal-ig-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;padding:.65rem 1.25rem;border-radius:100px;font-size:.9rem;font-weight:700;text-decoration:none">
+          📷 <span id="meet-modal-ig-text"></span>
+        </a>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="document.getElementById('modal-meet').classList.remove('open')"
+      data-ja="閉じる" data-en="Close">閉じる</button>
+  </div>
+</div>
+
+<!-- SCANNER MODAL -->
+<div class="scanner-overlay" id="scanner-overlay">
+  <div class="scanner-header">
+    <div class="scanner-title">📷 QRスキャン</div>
+    <button class="scanner-close" onclick="closeScanner()">✕</button>
+  </div>
+  <div class="scanner-viewport">
+    <video id="scanner-video" playsinline muted></video>
+    <canvas id="scanner-canvas" style="display:none"></canvas>
+    <div class="scanner-frame">
+      <div class="scanner-box">
+        <div class="c3"></div><div class="c4"></div>
+      </div>
+    </div>
+    <div class="scanner-line"></div>
+    <div class="scanner-hint"><p>ミッションのQRコードに向けてください</p></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── LANGUAGE ────────────────────────────────────────────────
+let lang = localStorage.getItem('itamae_lang') || 'ja';
+
+function t(ja, en) { return lang === 'en' ? en : ja; }
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('itamae_lang', l);
+  applyLang();
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-ja]').forEach(el => {
+    el.textContent = lang === 'en' ? el.dataset.en : el.dataset.ja;
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  // update placeholders
+  const nameInput = document.getElementById('input-name');
+  if (nameInput) nameInput.placeholder = t('例：田中みらの', 'e.g. Taro Yamada');
+  const startBtn = document.getElementById('btn-start');
+  if (startBtn) startBtn.textContent = t('ミッションをスタート →', 'Start Missions →');
+  // re-render dynamic content if already started
+  if (userName) {
+    renderMissions();
+    const cur = document.querySelector('.screen.active')?.id;
+    if (cur === 'screen-ranking') renderPublicRanking();
+  }
+}
+
+// ── DATA ────────────────────────────────────────────────────
+const MISSIONS = [
+  { id:'b1', cat:'B', pts:20,
+    text:  { ja:'セッション「社会を動かす問いと変化のつくり方」に参加した', en:'Attended the session "Creating Questions and Change That Move Society"' },
+    note:  { ja:'セッション終了時にスクリーンに表示されるQRをスキャン', en:'Scan the QR shown on screen at the end of the session' },
+    mode:'qr' },
+  { id:'b2', cat:'B', pts:15,
+    text:  { ja:'学生団体「Business Contest KING 実行委員会」のブースに訪れた', en:'Visited the "Business Contest KING" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'c1', cat:'C', pts:20,
+    text:      { ja:'ITAMAEから合言葉をもらう', en:'Get the secret word from ITAMAE' },
+    note:      { ja:'ITAMAEメンバーに声をかけて合言葉をもらおう', en:'Talk to an ITAMAE member to get the secret word' },
+    mode:'keyword',
+    question:  { ja:'合言葉を入力してください', en:'Enter the secret word' },
+    placeholder:{ ja:'合言葉', en:'Secret word' },
+    hint:      { ja:'ITAMAEメンバーに聞いてみよう', en:'Ask an ITAMAE member!' },
+    answers:['ありがとう'] },
+];
+
+// helper to get localized field
+function mText(m, field) {
+  const val = m[field];
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  return val[lang] || val.ja || '';
+}
+
+const REWARDS = [
+  { threshold:3, label:{ ja:'3クリア', en:'3 Done' }, icon:'🎖️' },
+  { threshold:5, label:{ ja:'5クリア', en:'5 Done' }, icon:'🏅' },
+  { threshold:7, label:{ ja:'7クリア', en:'7 Done' }, icon:'🥇' },
+  { threshold:9, label:{ ja:'全達成！', en:'All Done!' }, icon:'🏆' },
+];
+
+const CAT_CONFIG = {
+  A:{ label:{ ja:'カテゴリA：つながるミッション', en:'Category A: Connect' }, color:'var(--cat-a)' },
+  B:{ label:{ ja:'カテゴリB：SusHi Tech Tokyo探索ミッション', en:'Category B: Explore SusHi Tech Tokyo' }, color:'var(--cat-b)' },
+  C:{ label:{ ja:'カテゴリC：合言葉ミッション', en:'Category C: Secret Word' }, color:'var(--cat-c)' },
+};
+
+// ── STATE ────────────────────────────────────────────────────
+let userId=null, userName='', userOrg='', userIg='', cleared={};
+let fbUrl = localStorage.getItem('itamae_fb_url') || 'https://itamae-mission-default-rtdb.asia-southeast1.firebasedatabase.app';
+let appUrl = localStorage.getItem('itamae_app_url') || location.origin + location.pathname;
+
+// ── FIREBASE ─────────────────────────────────────────────────
+function fbReq(path, method, data) {
+  if (!fbUrl) return Promise.resolve(null);
+  const url = fbUrl.replace(/\/$/,'') + path + '.json';
+  const opts = { method, headers:{'Content-Type':'application/json'} };
+  if (data !== undefined) opts.body = JSON.stringify(data);
+  return fetch(url, opts).then(r=>r.json()).then(d => (d && d.error) ? null : d).catch(()=>null);
+}
+const fbGet = p => fbReq(p,'GET');
+const fbSet = (p,d) => fbReq(p,'PUT',d);
+
+// ── CONFIG ────────────────────────────────────────────────────
+function toggleConfig() {
+  const f = document.getElementById('config-fields');
+  const a = document.getElementById('config-arrow');
+  f.classList.toggle('open');
+  a.textContent = f.classList.contains('open') ? '▲' : '▼';
+}
+function saveConfig() {
+  fbUrl  = document.getElementById('fb-url').value.trim();
+  appUrl = document.getElementById('app-url').value.trim() || appUrl;
+  localStorage.setItem('itamae_fb_url', fbUrl);
+  localStorage.setItem('itamae_app_url', appUrl);
+  showToast('設定を保存しました');
+}
+if (fbUrl)  document.getElementById('fb-url').value  = fbUrl;
+if (appUrl) document.getElementById('app-url').value = appUrl;
+
+// ── QR URL PARSING ────────────────────────────────────────────
+function getQrParam() {
+  const p = new URLSearchParams(location.search);
+  return p.get('mission'); // e.g. ?mission=a1
+}
+
+// on load: check if arrived via QR
+window.addEventListener('DOMContentLoaded', async () => {
+  // ?meet= パラメータの処理（他のボランティアのQRをスキャンしてきた場合）
+  const meetParam = new URLSearchParams(location.search).get('meet');
+  if (meetParam) {
+    const savedUid = localStorage.getItem('itamae_uid');
+    if (savedUid && savedUid !== meetParam && fbUrl) {
+      try {
+        const now = Date.now();
+        await fbSet('/meetings/' + savedUid + '/' + meetParam, now);
+        await fbSet('/meetings/' + meetParam + '/' + savedUid, now);
+      } catch(e) {}
+    }
+    history.replaceState({}, '', location.pathname);
+  }
+
+  // loadMissionSettings は失敗してもスタート画面には必ず進む
+  try { await loadMissionSettings(); } catch(e) { console.warn('settings load failed', e); }
+
+  const mId = getQrParam();
+  if (mId) {
+    const m = MISSIONS.find(x => x.id === mId);
+    if (m) {
+      showScreen('qr-land');
+      const cfg = CAT_CONFIG[m.cat];
+      document.getElementById('qrl-title').textContent = mText(m,'text');
+      document.getElementById('qrl-sub').style.color = cfg.color;
+      document.getElementById('qrl-sub').textContent = (typeof cfg.label==='object'?cfg.label[lang]||cfg.label.ja:cfg.label) + '  ＋' + m.pts + 'pt';
+      return;
+    }
+  }
+
+  // セッション復元
+  const savedUid  = localStorage.getItem('itamae_uid');
+  const savedName = localStorage.getItem('itamae_name');
+  const savedIg   = localStorage.getItem('itamae_ig') || '';
+  if (savedUid && savedName) {
+    try {
+      userId   = savedUid;
+      userName = savedName;
+      userOrg  = '—';
+      userIg   = savedIg;
+      if (fbUrl) {
+        const userData = await fbGet('/users/' + userId);
+        if (userData) {
+          cleared = userData.cleared || {};
+          userIg  = userData.ig || savedIg;
+        }
+      }
+      document.getElementById('input-name').value = userName;
+      document.getElementById('disp-name').textContent = userName;
+      renderMissions();
+      document.getElementById('nav-tab').style.display = 'flex';
+      applyLang();
+      showScreen('missions');
+      return;
+    } catch(e) {
+      console.warn('Restore failed', e);
+      localStorage.removeItem('itamae_uid');
+      localStorage.removeItem('itamae_name');
+      localStorage.removeItem('itamae_ig');
+    }
+  }
+
+  applyLang(); // apply saved language preference
+  showScreen('register');
+});
+
+function showRegister() { showScreen('register'); }
+
+async function qrLandClear() {
+  const name = document.getElementById('qrl-name').value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+  const mId = getQrParam();
+  const m = MISSIONS.find(x => x.id === mId);
+  if (!m) return;
+
+  const now = new Date();
+  const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  // find or create user by name
+  let uid = null;
+  if (fbUrl) {
+    const all = await fbGet('/users');
+    if (all) {
+      const match = Object.entries(all).find(([k,v]) => v.name === name);
+      if (match) uid = match[0];
+    }
+  }
+  if (!uid) uid = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+  let userCleared = {};
+  if (fbUrl) {
+    const existing = await fbGet('/users/' + uid + '/cleared');
+    if (existing) userCleared = existing;
+  }
+
+  if (userCleared[mId]) {
+    showToast('このミッションは既にクリア済みです！');
+    setTimeout(() => { window.location.href = appUrl; }, 1500);
+    return;
+  }
+
+  userCleared[mId] = ts;
+  if (fbUrl) {
+    await fbSet('/users/' + uid, { name, org:'—', cleared:userCleared, registeredAt:Date.now() });
+  }
+
+  // show success
+  document.getElementById('screen-qr-land').innerHTML = `
+    <div style="text-align:center;padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1rem">
+      <div style="font-size:4rem">🎉</div>
+      <div style="font-size:1.6rem;font-weight:900">ミッションクリア！</div>
+      <div style="font-size:.9rem;color:var(--muted)">${name}さん ＋${m.pts}pt獲得</div>
+      <div style="font-size:.85rem;color:var(--muted);line-height:1.6">${m.text}</div>
+      <a href="${appUrl}" style="display:inline-block;background:var(--accent);color:white;padding:.85rem 2rem;border-radius:10px;font-weight:700;font-size:.95rem;text-decoration:none;margin-top:.5rem">
+        ミッション一覧へ →
+      </a>
+    </div>
+  `;
+}
+
+// ── START ─────────────────────────────────────────────────────
+async function startMission() {
+  const name = document.getElementById('input-name').value.trim();
+  const ig   = document.getElementById('input-instagram').value.trim().replace(/^@/, '');
+  if (!name) { alert(t('名前を入力してください','Please enter your name')); return; }
+
+  userName = name; userOrg = '—'; userIg = ig;
+  userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+  localStorage.setItem('itamae_uid', userId);
+  localStorage.setItem('itamae_name', userName);
+  localStorage.setItem('itamae_ig', userIg);
+
+  if (fbUrl) {
+    try {
+      const all = await fbGet('/users');
+      if (all) {
+        const match = Object.entries(all).find(([k,v]) => v.name===name);
+        if (match) { userId=match[0]; cleared=match[1].cleared||{}; userIg=match[1].ig||ig; }
+      }
+      await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, cleared, registeredAt:Date.now() });
+    } catch(e) { console.warn('Firebase error', e); }
+  }
+
+  document.getElementById('disp-name').textContent = userName;
+  document.getElementById('nav-tab').style.display = 'flex';
+  try { renderMissions(); } catch(e) { console.warn('renderMissions error', e); }
+  showScreen('missions');
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderMissions() {
+  const total = Object.keys(cleared).filter(id => MISSIONS.find(m => m.id === id)).length;
+  const pts = Object.keys(cleared).reduce((s, id) => {
+    const m = MISSIONS.find(x => x.id === id); return s + (m ? m.pts : 0);
+  }, 0);
+  const totalMissions = MISSIONS.length;
+
+  document.getElementById('prog-fill').style.width = (total / totalMissions * 100) + '%';
+  document.getElementById('prog-count').textContent = total;
+  document.getElementById('prog-total').textContent = totalMissions;
+  document.getElementById('disp-pts').textContent = pts + 'pt';
+
+  document.getElementById('reward-strip').innerHTML = REWARDS.map(r => `
+    <div class="reward-badge ${total >= r.threshold ? 'unlocked' : ''}">
+      <span class="rb-icon">${r.icon}</span>
+      <span class="rb-count">${r.threshold}</span>
+      <span>${typeof r.label === 'object' ? r.label[lang] || r.label.ja : r.label}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('missions-body').innerHTML = ['A','B','C'].map(cat => {
+    const cfg = CAT_CONFIG[cat];
+    const catLabel = typeof cfg.label === 'object' ? cfg.label[lang] || cfg.label.ja : cfg.label;
+
+    // カテゴリAは説明＋スキャンボタンのみ表示
+    if (cat === 'A') {
+      return `
+        <div class="cat-section">
+          <div class="cat-header">
+            <div class="cat-dot" style="background:${cfg.color}"></div>
+            <div class="cat-title" style="color:${cfg.color}">${catLabel}</div>
+          </div>
+          <div class="mission-card">
+            <div class="mission-body">
+              <div class="mission-text">
+                ${t(
+                  '友達になったボランティアと、QRを交換することで「出会い」が記録されます。友達100人を目指そう！',
+                  'Exchange QR codes with your new volunteer friends to record your connection. Aim for 100 friends!'
+                )}
+              </div>
+              <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
+                <button class="btn-scan-qr" onclick="openMeetScanner()">
+                  📷 ${t('友達のQRをスキャン', 'Scan Friend\'s QR')}
+                </button>
+                <button class="btn-scan-qr" onclick="switchTab('myqr')">
+                  👤 ${t('自分のQRを表示', 'Show My QR')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // カテゴリB・Cは通常のミッションカード表示
+    const items = MISSIONS.filter(m => m.cat === cat);
+    const catCleared = items.filter(m => cleared[m.id]).length;
+    return `
+      <div class="cat-section">
+        <div class="cat-header">
+          <div class="cat-dot" style="background:${cfg.color}"></div>
+          <div class="cat-title" style="color:${cfg.color}">${catLabel}</div>
+          <div class="cat-sub">${catCleared}/${items.length}</div>
+        </div>
+        ${items.map(m => missionCard(m)).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function missionCard(m) {
+  const done = !!cleared[m.id];
+  const isQr = m.mode === 'qr';
+  const isKeyword = m.mode === 'keyword';
+
+  const typeLabel = isQr
+    ? '<span class="badge-type qr">QR</span>'
+    : `<span class="badge-type self">${t('入力','Input')}</span>`;
+
+  let actionBtn = '';
+  if (!done) {
+    if (isQr) {
+      actionBtn = `<button class="btn-scan-qr" onclick="event.stopPropagation();openScanner('${m.id}')">📷 ${t('QRをスキャン','Scan QR')}</button>`;
+    } else if (isKeyword) {
+      actionBtn = `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">✏️ ${t('答えを入力','Enter Answer')}</button>`;
+    }
+  }
+
+  return `
+    <div class="mission-card ${done ? 'done' : ''} ${isQr ? 'qr-type' : ''}">
+      <div class="mission-check">${done ? '✓' : ''}</div>
+      <div class="mission-body">
+        <div class="mission-text">${mText(m,'text')}</div>
+        ${done ? `<div class="mission-time">${cleared[m.id]}</div>` : actionBtn}
+      </div>
+      <div class="mission-badge">
+        ${done ? '' : `<span class="badge-pts">+${m.pts}pt</span>`}
+        ${typeLabel}
+      </div>
+    </div>
+  `;
+}
+
+// ── KEYWORD MODAL ────────────────────────────────────────────
+let pendingKeywordId = null;
+
+function openKeywordModal(id) {
+  const m = MISSIONS.find(x => x.id === id);
+  const cfg = getMissionConfig(m);
+  pendingKeywordId = id;
+  document.getElementById('kw-title').textContent = mText(m,'text');
+  // cfg fields may be overridden (strings) or from mission data (objects)
+  const getField = (cfgVal, mField) => {
+    if (cfgVal && typeof cfgVal === 'string') return cfgVal;
+    return mText(m, mField);
+  };
+  document.getElementById('kw-question').textContent = getField(cfg.question, 'question');
+  document.getElementById('kw-hint').textContent = getField(cfg.hint, 'hint');
+  const input = document.getElementById('kw-input');
+  input.placeholder = getField(cfg.placeholder, 'placeholder');
+  input.value = '';
+  document.getElementById('kw-error').textContent = '';
+  document.getElementById('modal-keyword').classList.add('open');
+  setTimeout(() => input.focus(), 300);
+}
+
+function closeKeywordModal() {
+  document.getElementById('modal-keyword').classList.remove('open');
+  pendingKeywordId = null;
+}
+
+async function submitKeyword() {
+  const id = pendingKeywordId;
+  if (!id) return;
+  const m   = MISSIONS.find(x => x.id === id);
+  const cfg = getMissionConfig(m);
+  const input = document.getElementById('kw-input');
+  const val   = input.value.trim();
+  const errEl = document.getElementById('kw-error');
+
+  // validation based on current config
+  let ok = false;
+  if (cfg.type === 'keyword') {
+    ok = cfg.answers.some(a => a.toLowerCase() === val.toLowerCase());
+    if (!ok) {
+      errEl.textContent = t('合言葉が違います。運営メンバーに確認してみよう', 'Wrong secret word. Please check with an organizer.');
+      input.classList.add('shake');
+      setTimeout(() => input.classList.remove('shake'), 400);
+      return;
+    }
+  } else if (cfg.type === 'minlength') {
+    ok = val.length >= cfg.minLength;
+    if (!ok) {
+      errEl.textContent = t(`${cfg.minLength}文字以上入力してください`, `Please enter at least ${cfg.minLength} characters.`);
+      input.classList.add('shake');
+      setTimeout(() => input.classList.remove('shake'), 400);
+      return;
+    }
+  } else {
+    // freeform
+    ok = val.length > 0;
+    if (!ok) { errEl.textContent = t('何か入力してください','Please enter something.'); return; }
+  }
+
+  const now = new Date();
+  const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  cleared[id] = ts;
+  if (fbUrl) await fbSet('/users/' + userId + '/cleared', cleared);
+  closeKeywordModal();
+  renderMissions();
+  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +' + m.pts + 'pt');
+}
+
+// ── MODAL (旧・未使用) ───────────────────────────────────────
+let pendingId = null;
+function openModal(id) {}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+async function confirmMission() {}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+async function loadAdmin() {
+  if (!fbUrl) {
+    document.getElementById('ranking-list').innerHTML = '<div style="color:var(--muted);font-size:.8rem">Firebase未接続</div>';
+    return;
+  }
+  const all = await fbGet('/users');
+  if (!all) return;
+  const users = Object.values(all);
+  let totalClears=0, fullCount=0;
+
+  const ranked = users.map(u=>{
+    const n = Object.keys(u.cleared||{}).length;
+    const pts = Object.keys(u.cleared||{}).reduce((s,id)=>{
+      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
+    },0);
+    totalClears+=n; if(n===MISSIONS.length) fullCount++;
+    return {name:u.name,org:u.org,n,pts};
+  }).sort((a,b)=>b.pts-a.pts).slice(0,10);
+
+  document.getElementById('a-total').textContent  = users.length;
+  document.getElementById('a-clears').textContent = totalClears;
+  document.getElementById('a-full').textContent   = fullCount;
+
+  document.getElementById('ranking-list').innerHTML = ranked.map((u,i)=>`
+    <div class="ranking-row">
+      <div class="rank-num ${i<3?'top':''}">${i+1}</div>
+      <div class="rank-name">${u.name}<br><span style="font-size:.7rem;color:var(--muted)">${u.org}</span></div>
+      <div class="rank-score">${u.pts}pt</div>
+    </div>
+  `).join('');
+
+  const mCounts={};
+  users.forEach(u=>Object.keys(u.cleared||{}).forEach(id=>{mCounts[id]=(mCounts[id]||0)+1;}));
+  const maxC = Math.max(...Object.values(mCounts),1);
+  document.getElementById('mission-heat').innerHTML = MISSIONS.map(m=>{
+    const c=mCounts[m.id]||0;
+    const pct=(c/maxC*100).toFixed(0);
+    const cfg=CAT_CONFIG[m.cat];
+    return `
+      <div class="mission-heat-row">
+        <div style="font-size:.7rem;color:${cfg.color};width:16px">●</div>
+        <div style="flex:1;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.text}</div>
+        <div class="heat-bar-wrap"><div class="heat-bar" style="width:${pct}%;background:${cfg.color}"></div></div>
+        <div class="heat-count">${c}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildQrGrid() {
+  const qrMissions = MISSIONS.filter(m=>m.mode==='qr');
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  qrMissions.forEach(m=>{
+    const url = appUrl.replace(/\/$/,'') + '?mission=' + m.id;
+    const cfg = CAT_CONFIG[m.cat];
+
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    card.innerHTML = `
+      <div class="qr-card-cat" style="color:${cfg.color}">${cfg.label}</div>
+      <div class="qr-card-title">${m.text}</div>
+      <div class="qr-card-title" style="color:var(--accent2);font-family:'Space Mono',monospace">+${m.pts}pt</div>
+      <div class="qr-code-wrap" id="qr-${m.id}"></div>
+      <div class="qr-url">${url}</div>
+    `;
+    grid.appendChild(card);
+
+    // generate QR
+    setTimeout(()=>{
+      new QRCode(document.getElementById('qr-'+m.id), {
+        text: url,
+        width: 120, height: 120,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }, 50);
+  });
+}
+
+function switchAdminTab(tab) {
+  ['stats','qr','settings'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', tab===t);
+  });
+  document.getElementById('panel-stats').style.display    = tab==='stats'    ? 'block' : 'none';
+  document.getElementById('panel-qr').style.display       = tab==='qr'       ? 'block' : 'none';
+  document.getElementById('panel-settings').style.display = tab==='settings' ? 'block' : 'none';
+  if (tab==='qr')       buildQrGrid();
+  if (tab==='stats')    loadAdmin();
+  if (tab==='settings') renderSettingsPanel();
+}
+
+// ── MISSION SETTINGS ─────────────────────────────────────────
+// missionSettings: overrides applied on top of MISSIONS default
+// shape: { [missionId]: { type:'keyword'|'freeform'|'minlength', answers:[], minLength:3, question:'', hint:'', placeholder:'' } }
+let missionSettings = {};
+
+async function loadMissionSettings() {
+  // try Firebase first
+  if (fbUrl) {
+    const saved = await fbGet('/settings/missions');
+    if (saved) { missionSettings = saved; return; }
+  }
+  // fallback: localStorage
+  const ls = localStorage.getItem('itamae_mission_settings');
+  if (ls) { try { missionSettings = JSON.parse(ls); } catch(e) {} }
+}
+
+async function saveSettings() {
+  // read form values
+  const kwMissions = MISSIONS.filter(m => m.mode === 'keyword');
+  kwMissions.forEach(m => {
+    const type       = document.getElementById('st-type-'+m.id)?.value || 'freeform';
+    const answersRaw = document.getElementById('st-answers-'+m.id)?.value || '';
+    const minLen     = parseInt(document.getElementById('st-minlen-'+m.id)?.value) || 3;
+    const question   = document.getElementById('st-question-'+m.id)?.value.trim() || m.question;
+    const hint       = document.getElementById('st-hint-'+m.id)?.value.trim() || m.hint;
+    const placeholder= document.getElementById('st-placeholder-'+m.id)?.value.trim() || m.placeholder;
+
+    missionSettings[m.id] = {
+      type, minLength: minLen,
+      answers: answersRaw.split(/[,、\n]/).map(s=>s.trim()).filter(Boolean),
+      question, hint, placeholder
+    };
+  });
+
+  if (fbUrl) {
+    await fbSet('/settings/missions', missionSettings);
+  }
+  localStorage.setItem('itamae_mission_settings', JSON.stringify(missionSettings));
+  document.getElementById('settings-saved').textContent = '✓ 保存しました';
+  setTimeout(() => { document.getElementById('settings-saved').textContent = ''; }, 2500);
+}
+
+function getMissionConfig(m) {
+  // merge default + override
+  const ov = missionSettings[m.id] || {};
+  return {
+    type:        ov.type        || (m.answers ? 'keyword' : m.minLength ? 'minlength' : 'freeform'),
+    answers:     ov.answers     || m.answers     || [],
+    minLength:   ov.minLength   || m.minLength   || 3,
+    question:    ov.question    || m.question    || m.text,
+    hint:        ov.hint        || m.hint        || m.note,
+    placeholder: ov.placeholder || m.placeholder || '入力してください',
+  };
+}
+
+function renderSettingsPanel() {
+  const kwMissions = MISSIONS.filter(m => m.mode === 'keyword');
+  const container  = document.getElementById('settings-cards');
+  container.innerHTML = kwMissions.map(m => {
+    const cfg = getMissionConfig(m);
+    const catColor = CAT_CONFIG[m.cat].color;
+    return `
+      <div class="setting-card">
+        <div class="setting-card-title" style="color:${catColor}">${m.text}</div>
+        <div class="setting-card-sub">+${m.pts}pt</div>
+
+        <div class="setting-row">
+          <div class="setting-label">判定方式</div>
+          <select class="setting-select" id="st-type-${m.id}" onchange="onTypeChange('${m.id}')">
+            <option value="freeform"  ${cfg.type==='freeform' ?'selected':''}>自由入力（何でもOK）</option>
+            <option value="minlength" ${cfg.type==='minlength'?'selected':''}>最小文字数</option>
+            <option value="keyword"   ${cfg.type==='keyword'  ?'selected':''}>合言葉一致</option>
+          </select>
+        </div>
+
+        <div class="setting-sub-row ${cfg.type==='minlength'?'visible':''}" id="sr-minlen-${m.id}">
+          <div class="setting-label">最小文字数</div>
+          <input class="setting-input" id="st-minlen-${m.id}" type="number" min="1" max="50" value="${cfg.minLength}" style="width:80px;flex:none" />
+          <span style="font-size:.78rem;color:var(--muted)">文字以上</span>
+        </div>
+
+        <div class="setting-sub-row ${cfg.type==='keyword'?'visible':''}" id="sr-answers-${m.id}">
+          <div class="setting-label">合言葉</div>
+          <div style="flex:1">
+            <input class="setting-input" id="st-answers-${m.id}" type="text"
+              placeholder="複数ある場合はカンマ区切り"
+              value="${cfg.answers.join(', ')}" style="width:100%" />
+            <div class="setting-hint-text" style="margin-top:.4rem">例: itamae2026, ITAMAE2026（大文字小文字は区別しません）</div>
+          </div>
+        </div>
+
+        <div class="setting-row" style="margin-top:.5rem">
+          <div class="setting-label">質問文</div>
+          <input class="setting-input" id="st-question-${m.id}" type="text" value="${escHtml(cfg.question)}" />
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">ヒント</div>
+          <input class="setting-input" id="st-hint-${m.id}" type="text" value="${escHtml(cfg.hint)}" />
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">プレース</div>
+          <input class="setting-input" id="st-placeholder-${m.id}" type="text" value="${escHtml(cfg.placeholder)}" />
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function onTypeChange(mId) {
+  const type = document.getElementById('st-type-'+mId).value;
+  document.getElementById('sr-minlen-'+mId).classList.toggle('visible', type==='minlength');
+  document.getElementById('sr-answers-'+mId).classList.toggle('visible', type==='keyword');
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+// ── SCANNER ──────────────────────────────────────────────────
+let scannerStream = null;
+let scannerAnimId = null;
+let scannerTargetId = null;
+let scannerActive = false;
+
+function openScanner(missionId) {
+  scannerTargetId = missionId;
+  scannerActive = true;
+  document.getElementById('scanner-overlay').classList.add('open');
+  startCamera();
+}
+
+function closeScanner() {
+  scannerActive = false;
+  document.getElementById('scanner-overlay').classList.remove('open');
+  stopCamera();
+  scannerTargetId = null;
+}
+
+function stopCamera() {
+  if (scannerAnimId) { cancelAnimationFrame(scannerAnimId); scannerAnimId = null; }
+  if (scannerStream) { scannerStream.getTracks().forEach(t=>t.stop()); scannerStream = null; }
+  const v = document.getElementById('scanner-video');
+  v.srcObject = null;
+}
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:1280} }
+    });
+    scannerStream = stream;
+    const video = document.getElementById('scanner-video');
+    video.srcObject = stream;
+    await video.play();
+    scanFrame();
+  } catch(e) {
+    showToast(t('カメラへのアクセスを許可してください', 'Please allow camera access'));
+    closeScanner();
+  }
+}
+
+function scanFrame() {
+  if (!scannerActive) return;
+  const video  = document.getElementById('scanner-video');
+  const canvas = document.getElementById('scanner-canvas');
+  if (video.readyState < video.HAVE_ENOUGH_DATA) {
+    scannerAnimId = requestAnimationFrame(scanFrame);
+    return;
+  }
+  const size = Math.min(video.videoWidth, video.videoHeight);
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const ox = (video.videoWidth  - size) / 2;
+  const oy = (video.videoHeight - size) / 2;
+  ctx.drawImage(video, ox, oy, size, size, 0, 0, size, size);
+  const imageData = ctx.getImageData(0, 0, size, size);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'attemptBoth' });
+
+  if (code && code.data) {
+    handleQrResult(code.data);
+    return;
+  }
+  scannerAnimId = requestAnimationFrame(scanFrame);
+}
+
+async function handleQrResult(rawUrl) {
+  stopCamera();
+
+  let mId = null;
+  let meetUserId = null;
+
+  try {
+    const u = new URL(rawUrl);
+    mId = u.searchParams.get('mission');
+    meetUserId = u.searchParams.get('meet');
+  } catch(e) {}
+
+  const expected = scannerTargetId;
+
+  // フラッシュ演出
+  const overlay = document.getElementById('scanner-overlay');
+  const flash = document.createElement('div');
+  flash.className = 'scanner-success';
+  flash.innerHTML = '<span style="font-size:3rem">✓</span>';
+  overlay.appendChild(flash);
+  setTimeout(() => flash.remove(), 400);
+  await new Promise(r => setTimeout(r, 500));
+  closeScanner();
+
+  // ── 出会いQRの場合 ──────────────────────────────────────────
+  if (meetUserId) {
+    if (meetUserId === userId) {
+      showToast(t('自分のQRはスキャンできません', "That's your own QR!"));
+      return;
+    }
+    if (!fbUrl) {
+      showToast(t('Firebase未接続です', 'Firebase not connected'));
+      return;
+    }
+    try {
+      const existing = await fbGet('/meetings/' + userId + '/' + meetUserId);
+      if (existing) {
+        showToast(t('既に記録済みです！', 'Already connected!'));
+        return;
+      }
+    } catch(e) {}
+    try {
+      const now = Date.now();
+      await fbSet('/meetings/' + userId + '/' + meetUserId, now);
+      await fbSet('/meetings/' + meetUserId + '/' + userId, now);
+      const igHandle = new URLSearchParams(new URL(rawUrl).search).get('ig');
+      showMeetSuccessModal(igHandle);
+      loadMetList();
+    } catch(e) {
+      showToast(t('記録に失敗しました', 'Failed to record'));
+    }
+    return;
+  }
+
+  // ── ミッションQRの場合 ──────────────────────────────────────
+  if (!mId) {
+    showToast(t('このQRはミッション用ではありません', 'This is not a mission QR'));
+    return;
+  }
+  if (expected && expected !== '__meet__' && mId !== expected) {
+    showToast(t('別のミッションのQRです', 'Wrong mission QR'));
+    return;
+  }
+  const m = MISSIONS.find(x => x.id === mId);
+  if (!m) { showToast(t('ミッションが見つかりません', 'Mission not found')); return; }
+  if (cleared[mId]) { showToast(t('このミッションは既にクリア済みです！', 'Already completed!')); return; }
+
+  const now = new Date();
+  const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  cleared[mId] = ts;
+  if (fbUrl) await fbSet('/users/' + userId + '/cleared', cleared);
+  renderMissions();
+  showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +' + m.pts + 'pt');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'ranking') {
+    showScreen('ranking');
+    startRankingListener();
+  } else if (tab === 'myqr') {
+    showScreen('myqr');
+    stopRankingListener();
+    renderMyQr();
+  } else {
+    showScreen('missions');
+    stopRankingListener();
+    renderMissions();
+  }
+}
+
+// ── MY QR ────────────────────────────────────────────────────
+let myQrRendered = false;
+
+function renderMyQr() {
+  if (!userId) return;
+
+  const base = appUrl || location.origin + location.pathname;
+  const meetUrl = base + '?meet=' + userId + (userIg ? '&ig=' + encodeURIComponent(userIg) : '');
+  document.getElementById('my-qr-name').textContent = userName + (userIg ? '  @' + userIg : '');
+
+  if (!myQrRendered) {
+    const container = document.getElementById('my-qr-code');
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: meetUrl,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    myQrRendered = true;
+  }
+
+  loadMetList();
+}
+
+async function loadMetList() {
+  if (!fbUrl || !userId) return;
+  try {
+    const meetings = await fbGet('/meetings/' + userId);
+    const count = meetings ? Object.keys(meetings).length : 0;
+    document.getElementById('met-count').textContent = count;
+
+    if (!meetings) {
+      document.getElementById('met-list').innerHTML =
+        `<div style="color:var(--muted);font-size:.8rem">${t('まだ誰とも出会っていません', 'No connections yet')}</div>`;
+      return;
+    }
+
+    const users = await Promise.all(
+      Object.keys(meetings).map(async uid => {
+        try {
+          const user = await fbGet('/users/' + uid);
+          return user ? { name: user.name, ig: user.ig || '' } : { name: uid, ig: '' };
+        } catch(e) { return { name: uid, ig: '' }; }
+      })
+    );
+
+    document.getElementById('met-list').innerHTML = users.map(u => `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+        padding:.4rem .75rem;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.5rem">
+        <span>${u.name}</span>
+        ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
+          style="color:#e1306c;font-size:.7rem;text-decoration:none">@${u.ig}</a>` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    console.warn('loadMetList error', e);
+  }
+}
+
+function showMeetSuccessModal(igHandle) {
+  const igSection = document.getElementById('meet-modal-ig');
+  const igLink    = document.getElementById('meet-modal-ig-link');
+  const igText    = document.getElementById('meet-modal-ig-text');
+
+  if (igHandle) {
+    igSection.style.display = 'block';
+    igLink.href = 'https://www.instagram.com/' + igHandle + '/';
+    igText.textContent = '@' + igHandle + ' をInstagramで見る';
+  } else {
+    igSection.style.display = 'none';
+  }
+
+  document.getElementById('modal-meet').classList.add('open');
+}
+
+function openMeetScanner() {
+  scannerTargetId = '__meet__';
+  scannerActive = true;
+  document.getElementById('scanner-overlay').classList.add('open');
+  startCamera();
+}
+
+// ── REALTIME RANKING ─────────────────────────────────────────
+let rankingEventSource = null;
+let rankingPollTimer = null;
+let rankingUsersCache = null;
+
+function startRankingListener() {
+  if (!fbUrl) {
+    document.getElementById('ranking-loading').textContent = 'Firebase未接続のためランキングは表示されません';
+    document.getElementById('ranking-loading').style.display = 'block';
+    return;
+  }
+  document.getElementById('ranking-loading').style.display = 'none';
+  if (rankingEventSource || rankingPollTimer) return;
+
+  const url = fbUrl.replace(/\/$/, '') + '/users.json';
+  rankingEventSource = new EventSource(url);
+
+  rankingEventSource.addEventListener('put', (e) => {
+    const { path, data } = JSON.parse(e.data);
+    if (path === '/') {
+      rankingUsersCache = data || {};
+    } else {
+      if (!rankingUsersCache) rankingUsersCache = {};
+      const uid = path.replace(/^\//, '').split('/')[0];
+      if (data === null) delete rankingUsersCache[uid];
+      else rankingUsersCache[uid] = Object.assign(rankingUsersCache[uid] || {}, data);
+    }
+    renderPublicRankingFromData(rankingUsersCache);
+  });
+
+  rankingEventSource.addEventListener('patch', () => {
+    renderPublicRanking(); // パッチは再フェッチで対応
+  });
+
+  rankingEventSource.onerror = () => {
+    console.warn('SSE接続エラー、ポーリングにフォールバック');
+    rankingEventSource.close();
+    rankingEventSource = null;
+    if (!rankingPollTimer) {
+      renderPublicRanking();
+      rankingPollTimer = setInterval(renderPublicRanking, 10000);
+    }
+  };
+}
+
+function stopRankingListener() {
+  if (rankingEventSource) { rankingEventSource.close(); rankingEventSource = null; }
+  if (rankingPollTimer) { clearInterval(rankingPollTimer); rankingPollTimer = null; }
+  rankingUsersCache = null;
+}
+
+async function renderPublicRanking() {
+  const all = await fbGet('/users');
+  if (!all) return;
+  rankingUsersCache = all;
+  renderPublicRankingFromData(all);
+}
+
+async function renderPublicRankingFromData(all) {
+  if (!all) return;
+
+  const ranked = await Promise.all(Object.entries(all).map(async ([uid, u]) => {
+    const n = Object.keys(u.cleared || {}).length;
+    const pts = Object.keys(u.cleared || {}).reduce((s, id) => {
+      const m = MISSIONS.find(x => x.id === id); return s + (m ? m.pts : 0);
+    }, 0);
+    const cats = ['A','B','C'].map(cat => {
+      const items = MISSIONS.filter(m => m.cat === cat);
+      const done  = items.filter(m => (u.cleared||{})[m.id]).length;
+      return done === items.length ? cat : null;
+    }).filter(Boolean).join('');
+    let metCount = 0;
+    try {
+      const meetings = await fbGet('/meetings/' + uid);
+      metCount = meetings ? Object.keys(meetings).length : 0;
+    } catch(e) {}
+    return { uid, name: u.name || '—', n, pts, cats, metCount };
+  }));
+  const users = ranked.sort((a,b) => b.pts - a.pts || b.n - a.n);
+
+  const top10 = users.slice(0, 10);
+  const maxPts = top10[0]?.pts || 1;
+
+  // my rank
+  const myIdx = users.findIndex(u => u.uid === userId);
+  const myRankBanner = document.getElementById('my-rank-banner');
+  if (myIdx >= 0 && userId) {
+    myRankBanner.style.display = 'flex';
+    const myUser = users[myIdx];
+    document.getElementById('my-rank-text').textContent =
+      lang === 'en'
+        ? `#${myIdx + 1} of ${users.length}`
+        : `${myIdx + 1}位 / ${users.length}人中`;
+    document.getElementById('my-rank-pts').textContent = myUser.pts + 'pt';
+  } else {
+    myRankBanner.style.display = 'none';
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('ranking-public-list').innerHTML = top10.map((u, i) => {
+    const isMe = u.uid === userId;
+    const barW = Math.round(u.pts / maxPts * 100);
+    const catBadges = u.cats ? u.cats.split('').map(c =>
+      `<span style="font-size:.6rem;background:${c==='A'?'rgba(255,107,53,.2)':c==='B'?'rgba(59,130,246,.2)':'rgba(16,185,129,.2)'};color:${c==='A'?'var(--cat-a)':c==='B'?'var(--cat-b)':'var(--cat-c)'};border-radius:4px;padding:.1rem .35rem;font-weight:700">${c}</span>`
+    ).join(' ') : '';
+    return `
+      <div class="rank-card ${isMe ? 'is-me' : ''}">
+        <div class="rank-bar" style="width:${barW}%"></div>
+        ${i < 3
+          ? `<div class="rank-medal">${medals[i]}</div>`
+          : `<div class="rank-num-plain">${i+1}</div>`}
+        <div class="rank-info">
+          <div class="rank-info-name">${u.name}</div>
+          <div class="rank-info-sub">${u.n} ${lang==='en'?'missions':'ミッションクリア'} ${catBadges}${u.metCount > 0 ? ` ・🤝 ${u.metCount}${lang==='en'?' met':'人'}` : ''}</div>
+        </div>
+        <div class="rank-pts-badge">${u.pts}pt</div>
+      </div>
+    `;
+  }).join('');
+}
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
