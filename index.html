@@ -883,7 +883,7 @@ function applyLang() {
 }
 
 // ── DATA ────────────────────────────────────────────────────
-const MISSIONS = [
+let MISSIONS = [
   { id:'b1', cat:'B', pts:20,
     text:  { ja:'セッション「社会を動かす問いと変化のつくり方」に参加した', en:'Attended the session "Creating Questions and Change That Move Society"' },
     note:  { ja:'セッション終了時にスクリーンに表示されるQRをスキャン', en:'Scan the QR shown on screen at the end of the session' },
@@ -1405,7 +1405,23 @@ function switchAdminTab(tab) {
 // shape: { [missionId]: { type:'keyword'|'freeform'|'minlength', answers:[], minLength:3, question:'', hint:'', placeholder:'' } }
 let missionSettings = {};
 
+async function loadCustomMissions() {
+  if (!fbUrl) return;
+  try {
+    const customs = await fbGet('/custom_missions');
+    if (!customs) return;
+    const BASE_IDS = ['b1','b2','c1'];
+    Object.values(customs).forEach(m => {
+      if (!m || !m.id) return;
+      if (BASE_IDS.includes(m.id)) return; // 固定ミッションは上書きしない
+      if (!MISSIONS.find(x => x.id === m.id)) MISSIONS.push(m);
+    });
+  } catch(e) { console.warn('custom missions load failed', e); }
+}
+
 async function loadMissionSettings() {
+  // カスタムミッションを先に読み込む
+  await loadCustomMissions();
   // try Firebase first
   if (fbUrl) {
     const saved = await fbGet('/settings/missions');
