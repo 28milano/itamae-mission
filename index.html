@@ -583,7 +583,7 @@
 
     <div class="form-group">
       <label class="form-label" data-ja="あなたの名前" data-en="Your Name">あなたの名前</label>
-      <input class="form-input" id="input-name" type="text" placeholder="例：田中みらの" maxlength="20" />
+      <input class="form-input" id="input-name" type="text" placeholder="例：山田太郎" maxlength="20" />
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="Instagram（任意）" data-en="Instagram (optional)">Instagram（任意）</label>
@@ -871,7 +871,7 @@ function applyLang() {
   });
   // update placeholders
   const nameInput = document.getElementById('input-name');
-  if (nameInput) nameInput.placeholder = t('例：田中みらの', 'e.g. Taro Yamada');
+  if (nameInput) nameInput.placeholder = t('例：山田太郎', 'e.g. Taro Yamada');
   const startBtn = document.getElementById('btn-start');
   if (startBtn) startBtn.textContent = t('ミッションをスタート →', 'Start Missions →');
   // re-render dynamic content if already started
@@ -1735,8 +1735,7 @@ async function loadMetList() {
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
         padding:.4rem .75rem;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.5rem">
         <span>${u.name}</span>
-        ${u.ig ? `<a href="instagram://user?username=${u.ig}"
-          onclick="event.preventDefault();window.location.href='instagram://user?username=${u.ig}';setTimeout(()=>window.open('https://www.instagram.com/${u.ig}/','_blank'),600)"
+        ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
           style="color:#e1306c;font-size:.7rem;text-decoration:none">@${u.ig}</a>` : ''}
       </div>
     `).join('');
@@ -1757,12 +1756,10 @@ function showMeetSuccessModal(igHandle, metName) {
 
   if (igHandle) {
     igSection.style.display = 'block';
-    igLink.href = 'instagram://user?username=' + igHandle;
-    igLink.onclick = function(e) {
-      e.preventDefault();
-      window.location.href = 'instagram://user?username=' + igHandle;
-      setTimeout(() => { window.open('https://www.instagram.com/' + igHandle + '/', '_blank'); }, 600);
-    };
+    igLink.href = 'https://www.instagram.com/' + igHandle + '/';
+    igLink.target = '_blank';
+    igLink.rel = 'noopener noreferrer';
+    igLink.onclick = null;
     igText.textContent = '@' + igHandle + ' をInstagramで見る';
   } else {
     igSection.style.display = 'none';
