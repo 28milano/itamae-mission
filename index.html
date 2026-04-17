@@ -1109,43 +1109,32 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedIg   = localStorage.getItem('itamae_ig') || '';
   const savedLi   = localStorage.getItem('itamae_li') || '';
   if (savedUid && savedName) {
-    try {
-      userId   = savedUid;
-      userName = savedName;
-      userOrg  = '—';
-      userIg   = savedIg;
-      userLi   = savedLi;
-      if (fbUrl) {
+    userId   = savedUid;
+    userName = savedName;
+    userOrg  = '—';
+    userIg   = savedIg;
+    userLi   = savedLi;
+    if (fbUrl) {
+      try {
         const userData = await fbGet('/users/' + userId);
         if (userData) {
           cleared = userData.cleared || {};
           userIg  = userData.ig || savedIg;
           userLi  = userData.li || savedLi;
-        } else {
-          // Firebaseにユーザーが存在しない = 削除済み → リセット
-          localStorage.removeItem('itamae_uid');
-          localStorage.removeItem('itamae_name');
-          localStorage.removeItem('itamae_ig');
-          localStorage.removeItem('itamae_li');
-          applyLang();
-          showScreen('register');
-          return;
         }
+        // userData === null はネットワークエラーの可能性もあるため
+        // localStorageのデータで続行し、セッションは破棄しない
+      } catch(e) {
+        console.warn('Firebase restore failed, using local data', e);
       }
-      document.getElementById('input-name').value = userName;
-      document.getElementById('disp-name').textContent = userName;
-      renderMissions();
-      document.getElementById('nav-tab').style.display = 'flex';
-      applyLang();
-      showScreen('missions');
-      return;
-    } catch(e) {
-      console.warn('Restore failed', e);
-      localStorage.removeItem('itamae_uid');
-      localStorage.removeItem('itamae_name');
-      localStorage.removeItem('itamae_ig');
-      localStorage.removeItem('itamae_li');
     }
+    document.getElementById('input-name').value = userName;
+    document.getElementById('disp-name').textContent = userName;
+    renderMissions();
+    document.getElementById('nav-tab').style.display = 'flex';
+    applyLang();
+    showScreen('missions');
+    return;
   }
 
   applyLang(); // apply saved language preference
