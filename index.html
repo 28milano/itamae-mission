@@ -1949,9 +1949,9 @@ function openMeetScanner() {
 let rankingEventSource = null;
 let rankingPollTimer = null;
 let rankingUsersCache = null;
-let rankingRenderGen = 0;
+let meetingsCache = null;
 
-function startRankingListener() {
+async function startRankingListener() {
   if (!fbUrl) {
     document.getElementById('ranking-loading').textContent = 'Firebase未接続のためランキングは表示されません';
     document.getElementById('ranking-loading').style.display = 'block';
@@ -1959,6 +1959,8 @@ function startRankingListener() {
   }
   document.getElementById('ranking-loading').style.display = 'none';
   if (rankingEventSource || rankingPollTimer) return;
+
+  meetingsCache = await fbGet('/meetings') || {};
 
   const url = fbUrl.replace(/\/$/, '') + '/users.json';
   rankingEventSource = new EventSource(url);
@@ -2009,42 +2011,35 @@ function stopRankingListener() {
   if (rankingEventSource) { rankingEventSource.close(); rankingEventSource = null; }
   if (rankingPollTimer) { clearInterval(rankingPollTimer); rankingPollTimer = null; }
   rankingUsersCache = null;
+  meetingsCache = null;
 }
 
 async function renderPublicRanking() {
-  const all = await fbGet('/users');
+  const [all, meetings] = await Promise.all([fbGet('/users'), fbGet('/meetings')]);
   if (!all) return;
   rankingUsersCache = all;
+  meetingsCache = meetings || {};
   renderPublicRankingFromData(all);
 }
 
-async function renderPublicRankingFromData(all) {
+function renderPublicRankingFromData(all) {
   if (!all) return;
-  const gen = ++rankingRenderGen;
 
-  const ranked = await Promise.all(Object.entries(all).map(async ([uid, u]) => {
+  const ranked = Object.entries(all).map(([uid, u]) => {
     const n = Object.keys(u.cleared || {}).length;
-    const bcCleared = Object.keys(u.cleared || {}).filter(id => {
-      const m = MISSIONS.find(x => x.id === id);
-      return m && (m.cat === 'B' || m.cat === 'C');
-    }).length;
     const cats = ['A','B','C'].map(cat => {
       const items = MISSIONS.filter(m => m.cat === cat);
       const done  = items.filter(m => (u.cleared||{})[m.id]).length;
       return done === items.length ? cat : null;
     }).filter(Boolean).join('');
-    let metCount = 0;
-    try {
-      const meetings = await fbGet('/meetings/' + uid);
-      metCount = meetings ? Object.keys(meetings).length : 0;
-    } catch(e) {}
+    const metCount = meetingsCache && meetingsCache[uid]
+      ? Object.keys(meetingsCache[uid]).length : 0;
     const missionPts = Object.keys(u.cleared||{}).reduce((s,id)=>{
       const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
     },0);
     const pts = metCount * 5 + missionPts;
     return { uid, name: u.name || '—', n, pts, cats, metCount };
-  }));
-  if (gen !== rankingRenderGen) return;
+  });
 
   const users = ranked.sort((a,b) => b.pts - a.pts || b.n - a.n);
 
