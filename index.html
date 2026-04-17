@@ -120,19 +120,6 @@
   }
   .btn-primary:active { transform:scale(.98); opacity:.9; }
 
-  /* config */
-  .config-section {
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:10px; padding:1rem; margin-bottom:1.25rem;
-  }
-  .config-toggle { font-size:.75rem; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:.4rem; user-select:none; }
-  .config-fields { display:none; margin-top:.85rem; }
-  .config-fields.open { display:block; }
-  .config-input {
-    width:100%; background:var(--bg); border:1px solid var(--border);
-    border-radius:6px; padding:.5rem .75rem; color:var(--text);
-    font-family:'Space Mono',monospace; font-size:.72rem; margin-bottom:.5rem; outline:none;
-  }
   .btn-sm {
     background:var(--accent); border:none; border-radius:6px;
     padding:.4rem 1rem; color:white; font-size:.75rem; font-weight:700;
@@ -708,17 +695,6 @@
       <div class="logo-sub" data-ja="ミッションをクリアして特典をゲットしよう" data-en="Complete missions and earn rewards!">ミッションをクリアして特典をゲットしよう</div>
     </div>
 
-    <div class="config-section">
-      <div class="config-toggle" onclick="toggleConfig()">
-        ⚙️ Firebase設定（管理者のみ）<span id="config-arrow">▼</span>
-      </div>
-      <div class="config-fields" id="config-fields">
-        <input class="config-input" id="fb-url" placeholder="https://xxx.firebaseio.com" />
-        <input class="config-input" id="app-url" placeholder="このアプリのURL（QR生成用）例: https://itamae.github.io" />
-        <button class="btn-sm" onclick="saveConfig()">保存</button>
-      </div>
-    </div>
-
     <div class="form-group">
       <label class="form-label" data-ja="あなたの名前" data-en="Your Name">あなたの名前</label>
       <input class="form-input" id="input-name" type="text" placeholder="例：山田太郎" maxlength="20" />
@@ -1075,7 +1051,7 @@ const CAT_CONFIG = {
 // ── STATE ────────────────────────────────────────────────────
 let userId=null, userName='', userOrg='', userIg='', userLi='', cleared={};
 let myMetCount = 0;
-let fbUrl = localStorage.getItem('itamae_fb_url') || 'https://itamae-mission-default-rtdb.asia-southeast1.firebasedatabase.app';
+let fbUrl = 'https://itamae-mission-default-rtdb.asia-southeast1.firebaseio.com';
 let appUrl = localStorage.getItem('itamae_app_url') || location.origin + location.pathname;
 
 // ── FIREBASE ─────────────────────────────────────────────────
@@ -1088,23 +1064,6 @@ function fbReq(path, method, data) {
 }
 const fbGet = p => fbReq(p,'GET');
 const fbSet = (p,d) => fbReq(p,'PUT',d);
-
-// ── CONFIG ────────────────────────────────────────────────────
-function toggleConfig() {
-  const f = document.getElementById('config-fields');
-  const a = document.getElementById('config-arrow');
-  f.classList.toggle('open');
-  a.textContent = f.classList.contains('open') ? '▲' : '▼';
-}
-function saveConfig() {
-  fbUrl  = document.getElementById('fb-url').value.trim();
-  appUrl = document.getElementById('app-url').value.trim() || appUrl;
-  localStorage.setItem('itamae_fb_url', fbUrl);
-  localStorage.setItem('itamae_app_url', appUrl);
-  showToast('設定を保存しました');
-}
-if (fbUrl)  document.getElementById('fb-url').value  = fbUrl;
-if (appUrl) document.getElementById('app-url').value = appUrl;
 
 // ── QR URL PARSING ────────────────────────────────────────────
 function getQrParam() {
