@@ -1104,21 +1104,23 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   // セッション復元
-  const savedUid  = localStorage.getItem('itamae_uid');
-  const savedName = localStorage.getItem('itamae_name');
-  const savedIg   = localStorage.getItem('itamae_ig') || '';
-  const savedLi   = localStorage.getItem('itamae_li') || '';
+  const savedUid     = localStorage.getItem('itamae_uid');
+  const savedName    = localStorage.getItem('itamae_name');
+  const savedIg      = localStorage.getItem('itamae_ig') || '';
+  const savedLi      = localStorage.getItem('itamae_li') || '';
+  const savedCleared = JSON.parse(localStorage.getItem('itamae_cleared') || '{}');
   if (savedUid && savedName) {
     userId   = savedUid;
     userName = savedName;
     userOrg  = '—';
     userIg   = savedIg;
     userLi   = savedLi;
+    cleared  = savedCleared;
     if (fbUrl) {
       try {
         const userData = await fbGet('/users/' + userId);
         if (userData) {
-          cleared = userData.cleared || {};
+          cleared = userData.cleared || savedCleared;
           userIg  = userData.ig || savedIg;
           userLi  = userData.li || savedLi;
         }
@@ -1399,6 +1401,7 @@ async function submitKeyword() {
   const now = new Date();
   const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   cleared[id] = ts;
+  localStorage.setItem('itamae_cleared', JSON.stringify(cleared));
   if (fbUrl) await fbSet('/users/' + userId + '/cleared', cleared);
   closeKeywordModal();
   renderMissions();
@@ -1798,6 +1801,7 @@ async function handleQrResult(rawUrl) {
   const now = new Date();
   const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   cleared[mId] = ts;
+  localStorage.setItem('itamae_cleared', JSON.stringify(cleared));
   if (fbUrl) await fbSet('/users/' + userId + '/cleared', cleared);
   renderMissions();
   showToast(t('ミッションクリア！🎉', 'Mission Complete! 🎉') + ' +' + (m ? m.pts : 0) + 'pt');
