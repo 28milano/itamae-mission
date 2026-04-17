@@ -1949,6 +1949,7 @@ function openMeetScanner() {
 let rankingEventSource = null;
 let rankingPollTimer = null;
 let rankingUsersCache = null;
+let rankingRenderGen = 0;
 
 function startRankingListener() {
   if (!fbUrl) {
@@ -2019,6 +2020,7 @@ async function renderPublicRanking() {
 
 async function renderPublicRankingFromData(all) {
   if (!all) return;
+  const gen = ++rankingRenderGen;
 
   const ranked = await Promise.all(Object.entries(all).map(async ([uid, u]) => {
     const n = Object.keys(u.cleared || {}).length;
@@ -2042,6 +2044,8 @@ async function renderPublicRankingFromData(all) {
     const pts = metCount * 5 + missionPts;
     return { uid, name: u.name || '—', n, pts, cats, metCount };
   }));
+  if (gen !== rankingRenderGen) return;
+
   const users = ranked.sort((a,b) => b.pts - a.pts || b.n - a.n);
 
   const top10 = users;
