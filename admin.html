@@ -763,7 +763,7 @@ async function loadUsers() {
         padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem">
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:.9rem">${u.name}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${n}クリア・${pts}pt${u.ig?'・@'+u.ig:''}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${n}クリア・${pts}pt${u.ig?'・@'+u.ig:''}${u.li?'・in/'+u.li:''}</div>
         </div>
         <button onclick="deleteUser('${uid}','${u.name}')"
           style="background:#ef4444;border:none;border-radius:8px;color:white;
