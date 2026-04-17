@@ -79,19 +79,6 @@
   }
   .btn-primary:active { transform:scale(.98); opacity:.9; }
 
-  /* config */
-  .config-section {
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:10px; padding:1rem; margin-bottom:1.25rem;
-  }
-  .config-toggle { font-size:.75rem; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:.4rem; user-select:none; }
-  .config-fields { display:none; margin-top:.85rem; }
-  .config-fields.open { display:block; }
-  .config-input {
-    width:100%; background:var(--bg); border:1px solid var(--border);
-    border-radius:6px; padding:.5rem .75rem; color:var(--text);
-    font-family:'Space Mono',monospace; font-size:.72rem; margin-bottom:.5rem; outline:none;
-  }
   .btn-sm {
     background:var(--accent); border:none; border-radius:6px;
     padding:.4rem 1rem; color:white; font-size:.75rem; font-weight:700;
@@ -204,16 +191,6 @@
       <div class="logo-tag">ITAMAE MISSION</div>
       <div class="logo-title">ADMIN<br><span>PANEL</span></div>
       <div class="logo-sub">管理者専用画面</div>
-    </div>
-    <div class="config-section">
-      <div class="config-toggle" onclick="toggleConfig()" style="cursor:default;color:var(--text)">
-        🔧 Firebase設定
-      </div>
-      <div class="config-fields open" id="config-fields">
-        <input class="config-input" id="fb-url" placeholder="https://xxx.firebaseio.com" />
-        <input class="config-input" id="app-url" placeholder="参加者アプリのURL（QR生成用）" />
-        <button class="btn-sm" onclick="saveConfig()">保存</button>
-      </div>
     </div>
     <button class="btn-primary" onclick="enterAdmin()">管理画面へ →</button>
   </div>
@@ -456,7 +433,7 @@ const CAT_CONFIG = {
 
 // ── STATE ────────────────────────────────────────────────────
 let userId=null, userName='', userOrg='', cleared={};
-let fbUrl = localStorage.getItem('itamae_fb_url') || 'https://itamae-mission-default-rtdb.asia-southeast1.firebasedatabase.app';
+let fbUrl = 'https://itamae-mission-default-rtdb.asia-southeast1.firebaseio.com';
 // 古い間違ったappUrl（admin.htmlを含む）を自動修正
 const _savedAppUrl = localStorage.getItem('itamae_app_url');
 if (_savedAppUrl && _savedAppUrl.includes('admin.html')) localStorage.removeItem('itamae_app_url');
@@ -472,23 +449,6 @@ function fbReq(path, method, data) {
 }
 const fbGet = p => fbReq(p,'GET');
 const fbSet = (p,d) => fbReq(p,'PUT',d);
-
-// ── CONFIG ────────────────────────────────────────────────────
-function toggleConfig() {
-  const f = document.getElementById('config-fields');
-  const a = document.getElementById('config-arrow');
-  f.classList.toggle('open');
-  a.textContent = f.classList.contains('open') ? '▲' : '▼';
-}
-function saveConfig() {
-  fbUrl  = document.getElementById('fb-url').value.trim();
-  appUrl = document.getElementById('app-url').value.trim() || appUrl;
-  localStorage.setItem('itamae_fb_url', fbUrl);
-  localStorage.setItem('itamae_app_url', appUrl);
-  showToast('設定を保存しました');
-}
-if (fbUrl)  document.getElementById('fb-url').value  = fbUrl;
-if (appUrl) document.getElementById('app-url').value = appUrl;
 
 // ── QR URL PARSING ────────────────────────────────────────────
 function getQrParam() {
@@ -1032,8 +992,9 @@ function switchTab(tab) {
 // ── REALTIME RANKING ─────────────────────────────────────────
 let rankingListenerActive = false;
 let rankingPollTimer = null;
+let meetingsCache = null;
 
-function startRankingListener() {
+async function startRankingListener() {
   if (!fbUrl) {
     document.getElementById('ranking-loading').textContent = 'Firebase未接続のためランキングは表示されません';
     document.getElementById('ranking-loading').style.display = 'block';
@@ -1041,39 +1002,38 @@ function startRankingListener() {
   }
   document.getElementById('ranking-loading').style.display = 'none';
 
-  // Firebase REST APIはリアルタイムストリーミング（SSE）をサポート
-  // ただしシンプルにするため30秒ポーリングで実装
   if (rankingListenerActive) return;
   rankingListenerActive = true;
-  renderPublicRanking(); // 即時実行
-  rankingPollTimer = setInterval(renderPublicRanking, 10000); // 10秒ごと
+  meetingsCache = await fbGet('/meetings') || {};
+  renderPublicRanking();
+  rankingPollTimer = setInterval(renderPublicRanking, 10000);
 }
 
 function stopRankingListener() {
   rankingListenerActive = false;
   if (rankingPollTimer) { clearInterval(rankingPollTimer); rankingPollTimer = null; }
+  meetingsCache = null;
 }
 
 async function renderPublicRanking() {
-  const all = await fbGet('/users');
+  const [all, meetings] = await Promise.all([fbGet('/users'), fbGet('/meetings')]);
   if (!all) return;
+  meetingsCache = meetings || {};
 
-  const users = (await Promise.all(Object.entries(all).map(async ([uid, u]) => {
+  const users = Object.entries(all).map(([uid, u]) => {
     const n = Object.keys(u.cleared || {}).length;
-    const bcCleared = Object.keys(u.cleared || {}).filter(id => {
-      const m = MISSIONS.find(x => x.id === id);
-      return m && (m.cat === 'B' || m.cat === 'C');
-    }).length;
     const cats = ['A','B','C'].map(cat => {
       const items = MISSIONS.filter(m => m.cat === cat);
       const done  = items.filter(m => (u.cleared||{})[m.id]).length;
       return done === items.length ? cat : null;
     }).filter(Boolean).join('');
-    let metCount = 0;
-    try { const meetings = await fbGet('/meetings/' + uid); metCount = meetings ? Object.keys(meetings).length : 0; } catch(e) {}
-    const pts = metCount * 5 + bcCleared * 10;
+    const metCount = meetingsCache[uid] ? Object.keys(meetingsCache[uid]).length : 0;
+    const missionPts = Object.keys(u.cleared||{}).reduce((s,id)=>{
+      const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
+    },0);
+    const pts = metCount * 5 + missionPts;
     return { uid, name: u.name || '—', n, pts, cats };
-  }))).sort((a,b) => b.pts - a.pts || b.n - a.n);
+  }).sort((a,b) => b.pts - a.pts || b.n - a.n);
 
   const top10 = users.slice(0, 10);
   const maxPts = top10[0]?.pts || 1;
