@@ -663,11 +663,11 @@
       <div class="welcome-section-icon">📸</div>
       <div style="flex:1">
         <div class="welcome-section-title"
-          data-ja="Instagramについて（任意）"
-          data-en="Instagram (optional)">Instagramについて（任意）</div>
+          data-ja="SNSアカウントについて（任意）"
+          data-en="SNS Accounts (optional)">SNSアカウントについて（任意）</div>
         <div class="welcome-section-text"
-          data-ja="次の画面でInstagramのIDを任意で入力できます。入力した場合、ミッション達成時に相手のプロフィールへのリンクが表示され、つながりやすくなります。入力しなくても参加できます。"
-          data-en="On the next screen, you can optionally enter your Instagram ID. If you do, a link to your profile will appear when you connect with other volunteers. You can leave it blank and still participate.">次の画面でInstagramのIDを任意で入力できます。入力した場合、ミッション達成時に相手のプロフィールへのリンクが表示され、つながりやすくなります。入力しなくても参加できます。</div>
+          data-ja="次の画面でInstagramまたはLinkedInのIDを任意で入力できます。入力した場合、ミッション達成時に相手のプロフィールへのリンクが表示され、つながりやすくなります。入力しなくても参加できます。"
+          data-en="On the next screen, you can optionally enter your Instagram or LinkedIn ID. If you do, a link to your profile will appear when you connect with other volunteers. You can leave it blank and still participate.">次の画面でInstagramまたはLinkedInのIDを任意で入力できます。入力した場合、ミッション達成時に相手のプロフィールへのリンクが表示され、つながりやすくなります。入力しなくても参加できます。</div>
       </div>
     </div>
 
@@ -678,8 +678,8 @@
           data-ja="個人情報の取り扱い"
           data-en="Privacy">個人情報の取り扱い</div>
         <div class="welcome-section-text"
-          data-ja="入力いただいたお名前・Instagram IDは、本アプリ内のランキング表示・ボランティア同士のつながり機能にのみ使用します。第三者への提供やアプリ外での利用は一切行いません。"
-          data-en="Your name and Instagram ID will only be used within this app for the ranking and volunteer connection features. We will never share your information with third parties or use it outside this app.">入力いただいたお名前・Instagram IDは、本アプリ内のランキング表示・ボランティア同士のつながり機能にのみ使用します。第三者への提供やアプリ外での利用は一切行いません。</div>
+          data-ja="入力いただいたお名前・Instagram ID・LinkedIn IDは、本アプリ内のランキング表示・ボランティア同士のつながり機能にのみ使用します。第三者への提供やアプリ外での利用は一切行いません。"
+          data-en="Your name, Instagram ID, and LinkedIn ID will only be used within this app for the ranking and volunteer connection features. We will never share your information with third parties or use it outside this app.">入力いただいたお名前・Instagram ID・LinkedIn IDは、本アプリ内のランキング表示・ボランティア同士のつながり機能にのみ使用します。第三者への提供やアプリ外での利用は一切行いません。</div>
       </div>
     </div>
 
@@ -731,6 +731,18 @@
           id="input-instagram"
           type="text"
           placeholder="instagram.com/username"
+          maxlength="100"
+          style="background:none;border:none;padding:0;flex:1" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="LinkedIn（任意）" data-en="LinkedIn (optional)">LinkedIn（任意）</label>
+      <div style="display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;gap:.5rem">
+        <span style="color:var(--muted);font-size:.85rem">in/</span>
+        <input class="form-input"
+          id="input-linkedin"
+          type="text"
+          placeholder="linkedin.com/in/username"
           maxlength="100"
           style="background:none;border:none;padding:0;flex:1" />
       </div>
@@ -958,6 +970,14 @@
           📷 <span id="meet-modal-ig-text"></span>
         </a>
       </div>
+      <div id="meet-modal-li" style="margin-top:.6rem;display:none">
+        <a id="meet-modal-li-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:inline-flex;align-items:center;gap:.5rem;background:#0077b5;color:white;padding:.65rem 1.25rem;border-radius:100px;font-size:.9rem;font-weight:700;text-decoration:none">
+          💼 <span id="meet-modal-li-text"></span>
+        </a>
+      </div>
     </div>
     <button class="btn-primary" onclick="document.getElementById('modal-meet').classList.remove('open')"
       data-ja="閉じる" data-en="Close">閉じる</button>
@@ -1053,7 +1073,7 @@ const CAT_CONFIG = {
 };
 
 // ── STATE ────────────────────────────────────────────────────
-let userId=null, userName='', userOrg='', userIg='', cleared={};
+let userId=null, userName='', userOrg='', userIg='', userLi='', cleared={};
 let myMetCount = 0;
 let fbUrl = localStorage.getItem('itamae_fb_url') || 'https://itamae-mission-default-rtdb.asia-southeast1.firebasedatabase.app';
 let appUrl = localStorage.getItem('itamae_app_url') || location.origin + location.pathname;
@@ -1128,22 +1148,26 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedUid  = localStorage.getItem('itamae_uid');
   const savedName = localStorage.getItem('itamae_name');
   const savedIg   = localStorage.getItem('itamae_ig') || '';
+  const savedLi   = localStorage.getItem('itamae_li') || '';
   if (savedUid && savedName) {
     try {
       userId   = savedUid;
       userName = savedName;
       userOrg  = '—';
       userIg   = savedIg;
+      userLi   = savedLi;
       if (fbUrl) {
         const userData = await fbGet('/users/' + userId);
         if (userData) {
           cleared = userData.cleared || {};
           userIg  = userData.ig || savedIg;
+          userLi  = userData.li || savedLi;
         } else {
           // Firebaseにユーザーが存在しない = 削除済み → リセット
           localStorage.removeItem('itamae_uid');
           localStorage.removeItem('itamae_name');
           localStorage.removeItem('itamae_ig');
+          localStorage.removeItem('itamae_li');
           applyLang();
           showScreen('register');
           return;
@@ -1161,6 +1185,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       localStorage.removeItem('itamae_uid');
       localStorage.removeItem('itamae_name');
       localStorage.removeItem('itamae_ig');
+      localStorage.removeItem('itamae_li');
     }
   }
 
@@ -1228,9 +1253,12 @@ async function startMission() {
   const igRaw = document.getElementById('input-instagram').value.trim();
   const igMatch = igRaw.match(/instagram\.com\/([^/?#\s]+)/);
   const ig = igMatch ? igMatch[1] : igRaw.replace(/^@/, '');
+  const liRaw = document.getElementById('input-linkedin').value.trim();
+  const liMatch = liRaw.match(/linkedin\.com\/in\/([^/?#\s]+)/);
+  const li = liMatch ? liMatch[1] : liRaw.replace(/^@/, '');
   if (!name) { alert(t('名前を入力してください','Please enter your name')); return; }
 
-  userName = name; userOrg = '—'; userIg = ig;
+  userName = name; userOrg = '—'; userIg = ig; userLi = li;
   userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
 
   if (fbUrl) {
@@ -1238,9 +1266,9 @@ async function startMission() {
       const all = await fbGet('/users');
       if (all) {
         const match = Object.entries(all).find(([k,v]) => v.name===name);
-        if (match) { userId=match[0]; cleared=match[1].cleared||{}; userIg=match[1].ig||ig; }
+        if (match) { userId=match[0]; cleared=match[1].cleared||{}; userIg=match[1].ig||ig; userLi=match[1].li||li; }
       }
-      await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, cleared, registeredAt:Date.now() });
+      await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, li:userLi, cleared, registeredAt:Date.now() });
     } catch(e) { console.warn('Firebase error', e); }
   }
 
@@ -1248,6 +1276,7 @@ async function startMission() {
   localStorage.setItem('itamae_uid', userId);
   localStorage.setItem('itamae_name', userName);
   localStorage.setItem('itamae_ig', userIg);
+  localStorage.setItem('itamae_li', userLi);
 
   document.getElementById('disp-name').textContent = userName;
   document.getElementById('nav-tab').style.display = 'flex';
@@ -1794,9 +1823,10 @@ async function handleQrResult(rawUrl) {
       await fbSet('/meetings/' + userId + '/' + meetUserId, now);
       await fbSet('/meetings/' + meetUserId + '/' + userId, now);
       const igHandle = new URLSearchParams(new URL(rawUrl).search).get('ig');
+      const liHandle = new URLSearchParams(new URL(rawUrl).search).get('li');
       const metUser = await fbGet('/users/' + meetUserId);
       const metName = metUser ? metUser.name : null;
-      showMeetSuccessModal(igHandle, metName);
+      showMeetSuccessModal(igHandle, liHandle, metName);
       loadMetList();
     } catch(e) {
       showToast(t('記録に失敗しました', 'Failed to record'));
@@ -1853,8 +1883,8 @@ function renderMyQr() {
   if (!userId) return;
 
   const base = appUrl || location.origin + location.pathname;
-  const meetUrl = base + '?meet=' + userId + (userIg ? '&ig=' + encodeURIComponent(userIg) : '');
-  document.getElementById('my-qr-name').textContent = userName + (userIg ? '  @' + userIg : '');
+  const meetUrl = base + '?meet=' + userId + (userIg ? '&ig=' + encodeURIComponent(userIg) : '') + (userLi ? '&li=' + encodeURIComponent(userLi) : '');
+  document.getElementById('my-qr-name').textContent = userName + (userIg ? '  @' + userIg : '') + (userLi ? '  in/' + userLi : '');
 
   if (!myQrRendered) {
     const container = document.getElementById('my-qr-code');
@@ -1892,8 +1922,8 @@ async function loadMetList() {
       Object.keys(meetings).map(async uid => {
         try {
           const user = await fbGet('/users/' + uid);
-          return user ? { name: user.name, ig: user.ig || '' } : { name: uid, ig: '' };
-        } catch(e) { return { name: uid, ig: '' }; }
+          return user ? { name: user.name, ig: user.ig || '', li: user.li || '' } : { name: uid, ig: '', li: '' };
+        } catch(e) { return { name: uid, ig: '', li: '' }; }
       })
     );
 
@@ -1903,6 +1933,8 @@ async function loadMetList() {
         <span>${u.name}</span>
         ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
           style="color:#e1306c;font-size:.7rem;text-decoration:none">@${u.ig}</a>` : ''}
+        ${u.li ? `<a href="https://www.linkedin.com/in/${u.li}/" target="_blank" rel="noopener noreferrer"
+          style="color:#0077b5;font-size:.7rem;text-decoration:none">in/${u.li}</a>` : ''}
       </div>
     `).join('');
   } catch(e) {
@@ -1910,10 +1942,13 @@ async function loadMetList() {
   }
 }
 
-function showMeetSuccessModal(igHandle, metName) {
+function showMeetSuccessModal(igHandle, liHandle, metName) {
   const igSection = document.getElementById('meet-modal-ig');
   const igLink    = document.getElementById('meet-modal-ig-link');
   const igText    = document.getElementById('meet-modal-ig-text');
+  const liSection = document.getElementById('meet-modal-li');
+  const liLink    = document.getElementById('meet-modal-li-link');
+  const liText    = document.getElementById('meet-modal-li-text');
   const title     = document.getElementById('meet-modal-title');
 
   title.textContent = metName
@@ -1929,6 +1964,16 @@ function showMeetSuccessModal(igHandle, metName) {
     igText.textContent = (metName || ('@' + igHandle)) + ' とInstagramでつながる';
   } else {
     igSection.style.display = 'none';
+  }
+  if (liHandle) {
+    liSection.style.display = 'block';
+    liLink.href = 'https://www.linkedin.com/in/' + liHandle + '/';
+    liLink.target = '_blank';
+    liLink.rel = 'noopener noreferrer';
+    liLink.onclick = null;
+    liText.textContent = (metName || liHandle) + ' とLinkedInでつながる';
+  } else {
+    liSection.style.display = 'none';
   }
 
   document.getElementById('modal-meet').classList.add('open');
