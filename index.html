@@ -1049,8 +1049,19 @@ let MISSIONS = [
     answers:['placeholder3'] },
 ];
 
-// helper to get localized field
+// helper to get localized field（missionSettingsの上書きを反映）
 function mText(m, field) {
+  const ov = missionSettings && missionSettings[m.id];
+  if (ov) {
+    if (field === 'text') {
+      const t = lang === 'en' ? (ov.textEn || ov.textJa) : ov.textJa;
+      if (t) return t;
+    }
+    if (field === 'note') {
+      const n = lang === 'en' ? (ov.noteEn || ov.noteJa) : ov.noteJa;
+      if (n) return n;
+    }
+  }
   const val = m[field];
   if (!val) return '';
   if (typeof val === 'string') return val;
