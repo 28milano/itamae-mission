@@ -1952,12 +1952,8 @@ async function loadMetList() {
 
     document.getElementById('met-list').innerHTML = users.map(u => `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
-        padding:.4rem .75rem;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.5rem">
-        <span>${u.name}</span>
-        ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
-          style="color:#e1306c;font-size:.7rem;text-decoration:none">@${u.ig}</a>` : ''}
-        ${u.li ? `<a href="https://www.linkedin.com/in/${u.li}/" target="_blank" rel="noopener noreferrer"
-          style="color:#0077b5;font-size:.7rem;text-decoration:none">in/${u.li}</a>` : ''}
+        padding:.4rem .75rem;font-size:.78rem;font-weight:700">
+        ${u.name}
       </div>
     `).join('');
   } catch(e) {
