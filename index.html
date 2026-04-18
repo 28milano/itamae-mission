@@ -50,24 +50,24 @@
   }
   .welcome-card {
     background:var(--surface); border:1px solid var(--border);
-    border-radius:16px; padding:2.5rem 2rem;
+    border-radius:16px; padding:1.5rem 1.25rem;
     width:100%; max-width:400px;
   }
   .welcome-section {
     background:var(--surface2); border:1px solid var(--border);
-    border-radius:12px; padding:1rem 1.25rem; margin-bottom:.85rem;
-    display:flex; gap:.85rem; align-items:flex-start;
+    border-radius:12px; padding:.65rem .9rem; margin-bottom:.5rem;
+    display:flex; gap:.6rem; align-items:flex-start;
   }
-  .welcome-section-icon { font-size:.95rem; flex-shrink:0; margin-top:.15rem; }
+  .welcome-section-icon { font-size:.9rem; flex-shrink:0; margin-top:.12rem; }
   .welcome-section-title {
     font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--accent); margin-bottom:.3rem;
+    color:var(--accent); margin-bottom:.25rem;
   }
-  .welcome-section-text { font-size:.85rem; color:var(--text); line-height:1.65; }
-  .cat-chips { display:flex; flex-direction:column; gap:.4rem; margin-top:.6rem; }
+  .welcome-section-text { font-size:.78rem; color:var(--text); line-height:1.55; }
+  .cat-chips { display:flex; flex-direction:column; gap:.3rem; margin-top:.45rem; }
   .cat-chip {
-    display:flex; align-items:flex-start; gap:.55rem;
-    font-size:.8rem; line-height:1.5;
+    display:flex; align-items:flex-start; gap:.45rem;
+    font-size:.75rem; line-height:1.45;
   }
   .cat-chip-dot {
     width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:.35rem;
@@ -701,27 +701,20 @@
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="Instagram（任意）" data-en="Instagram (optional)">Instagram（任意）</label>
-      <div style="display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;gap:.5rem">
-        <span style="color:var(--muted);font-size:.9rem">@</span>
-        <input class="form-input"
+      <input class="form-input"
           id="input-instagram"
           type="text"
-          placeholder="instagram.com/username"
-          maxlength="100"
-          style="background:none;border:none;padding:0;flex:1" />
-      </div>
+          placeholder="https://www.instagram.com/username"
+          maxlength="100" />
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="LinkedIn（任意）" data-en="LinkedIn (optional)">LinkedIn（任意）</label>
-      <div style="display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;gap:.5rem">
-        <span style="color:var(--muted);font-size:.85rem">in/</span>
-        <input class="form-input"
+      <input class="form-input"
           id="input-linkedin"
           type="text"
-          placeholder="linkedin.com/in/username"
-          maxlength="100"
-          style="background:none;border:none;padding:0;flex:1" />
-      </div>
+          placeholder="https://www.linkedin.com/in/username"
+          maxlength="100" />
+    </div>
     </div>
     <button class="btn-primary" id="btn-start" onclick="startMission()">ミッションをスタート →</button>
   </div>
