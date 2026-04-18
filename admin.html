@@ -779,6 +779,7 @@ async function switchAdminTab(tab) {
   if (tab==='users')    loadUsers();
   if (tab==='settings') {
     document.getElementById('admin-app-url').value = appUrl;
+    await loadCustomMissions();
     await loadMissionSettings();
     renderSettingsPanel();
     loadCustomMissionsList();
@@ -844,6 +845,22 @@ async function deleteUser(uid, name) {
 // shape: { [missionId]: { type:'keyword'|'freeform'|'minlength', answers:[], minLength:3, question:'', hint:'', placeholder:'' } }
 let missionSettings = {};
 
+async function loadCustomMissions() {
+  // カスタムミッションを一旦全削除して最新状態に同期
+  for (let i = MISSIONS.length - 1; i >= 0; i--) {
+    if (MISSIONS[i].custom) MISSIONS.splice(i, 1);
+  }
+  if (!fbUrl) return;
+  try {
+    const customs = await fbGet('/custom_missions');
+    if (!customs) return;
+    Object.values(customs).forEach(m => {
+      if (!m || !m.id) return;
+      MISSIONS.push(m);
+    });
+  } catch(e) { console.warn('custom missions load failed', e); }
+}
+
 async function loadMissionSettings() {
   // try Firebase first
   if (fbUrl) {
@@ -862,25 +879,41 @@ async function saveMissionSetting(mId) {
   const textJa = document.getElementById('st-textja-'+mId)?.value.trim() || '';
   const textEn = document.getElementById('st-texten-'+mId)?.value.trim() || '';
 
-  const setting = { ...(missionSettings[mId] || {}), textJa, textEn };
-
-  if (m.mode === 'keyword') {
-    const type        = document.getElementById('st-type-'+mId)?.value || 'keyword';
-    const answersRaw  = document.getElementById('st-answers-'+mId)?.value || '';
-    const minLen      = parseInt(document.getElementById('st-minlen-'+mId)?.value) || 3;
-    const question    = document.getElementById('st-question-'+mId)?.value.trim() || '';
-    const hint        = document.getElementById('st-hint-'+mId)?.value.trim() || '';
-    Object.assign(setting, {
-      type, minLength: minLen,
-      answers: answersRaw.split(/[,、\n]/).map(s => s.trim()).filter(Boolean),
-      question, hint,
-    });
+  if (m.custom) {
+    // カスタムミッション → /custom_missions/{id} を直接更新
+    const updated = { ...m, text: { ja: textJa, en: textEn || textJa } };
+    if (m.mode === 'keyword' || m.mode === 'minlength' || m.mode === 'freeform') {
+      const type       = document.getElementById('st-type-'+mId)?.value || m.mode;
+      const answersRaw = document.getElementById('st-answers-'+mId)?.value || '';
+      const minLen     = parseInt(document.getElementById('st-minlen-'+mId)?.value) || 3;
+      const question   = document.getElementById('st-question-'+mId)?.value.trim() || '';
+      const hint       = document.getElementById('st-hint-'+mId)?.value.trim() || '';
+      updated.mode     = type;
+      updated.answers  = answersRaw.split(/[,、\n]/).map(s => s.trim()).filter(Boolean);
+      updated.minLength = minLen;
+      updated.question = { ja: question, en: question };
+      updated.hint     = { ja: hint, en: hint };
+    }
+    if (fbUrl) await fbSet('/custom_missions/' + mId, updated);
+  } else {
+    // 固定ミッション → /settings/missions/{id} に設定を上書き保存
+    const setting = { ...(missionSettings[mId] || {}), textJa, textEn };
+    if (m.mode === 'keyword') {
+      const type       = document.getElementById('st-type-'+mId)?.value || 'keyword';
+      const answersRaw = document.getElementById('st-answers-'+mId)?.value || '';
+      const minLen     = parseInt(document.getElementById('st-minlen-'+mId)?.value) || 3;
+      const question   = document.getElementById('st-question-'+mId)?.value.trim() || '';
+      const hint       = document.getElementById('st-hint-'+mId)?.value.trim() || '';
+      Object.assign(setting, {
+        type, minLength: minLen,
+        answers: answersRaw.split(/[,、\n]/).map(s => s.trim()).filter(Boolean),
+        question, hint,
+      });
+    }
+    missionSettings[mId] = setting;
+    if (fbUrl) await fbSet('/settings/missions/' + mId, setting);
+    localStorage.setItem('itamae_mission_settings', JSON.stringify(missionSettings));
   }
-
-  missionSettings[mId] = setting;
-
-  if (fbUrl) await fbSet('/settings/missions/' + mId, setting);
-  localStorage.setItem('itamae_mission_settings', JSON.stringify(missionSettings));
 
   const savedEl = document.getElementById('st-saved-'+mId);
   if (savedEl) {
@@ -903,65 +936,84 @@ function getMissionConfig(m) {
   };
 }
 
-function renderSettingsPanel() {
-  const bcMissions = MISSIONS.filter(m => m.cat === 'B' || m.cat === 'C');
-  const container  = document.getElementById('settings-cards');
-  container.innerHTML = bcMissions.map(m => {
-    const cfg = getMissionConfig(m);
-    const catColor = CAT_CONFIG[m.cat].color;
-    const isQuiz = m.mode === 'keyword';
-    return `
-      <div class="setting-card">
-        <div class="setting-card-title" style="color:${catColor}">カテゴリ${m.cat} ・ ${mText(m,'text')}</div>
-        <div class="setting-card-sub">+${m.pts}pt</div>
+function renderMissionCard(m) {
+  const cfg = getMissionConfig(m);
+  const catCfg = CAT_CONFIG[m.cat] || { color: 'var(--muted)' };
+  const catColor = catCfg.color;
+  const isInput = (m.mode === 'keyword' || m.mode === 'minlength' || m.mode === 'freeform');
+  const modeLabel = { qr:'QRスキャン', keyword:'回答一致', minlength:'最小文字数', freeform:'自由入力' }[m.mode] || m.mode;
+  return `
+    <div class="setting-card">
+      <div class="setting-card-title" style="color:${catColor}">
+        カテゴリ${m.cat}${m.custom ? ' <span style="font-size:.65rem;background:rgba(255,107,53,.15);color:var(--accent);border-radius:4px;padding:.1rem .4rem">カスタム</span>' : ''} ・ ${mText(m,'text')}
+      </div>
+      <div class="setting-card-sub">+${m.pts}pt ・ ${modeLabel}</div>
 
-        <div class="setting-row">
-          <div class="setting-label">ミッション名（日）</div>
-          <input class="setting-input" id="st-textja-${m.id}" type="text" value="${escHtml(cfg.textJa)}" />
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">ミッション名（英）</div>
-          <input class="setting-input" id="st-texten-${m.id}" type="text" value="${escHtml(cfg.textEn)}" placeholder="省略時は日本語を使用" />
-        </div>
+      <div class="setting-row">
+        <div class="setting-label">ミッション名（日）</div>
+        <input class="setting-input" id="st-textja-${m.id}" type="text" value="${escHtml(cfg.textJa)}" />
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">ミッション名（英）</div>
+        <input class="setting-input" id="st-texten-${m.id}" type="text" value="${escHtml(cfg.textEn)}" placeholder="省略時は日本語を使用" />
+      </div>
 
-        ${isQuiz ? `
-        <div class="setting-row" style="margin-top:.5rem">
-          <div class="setting-label">判定方式</div>
-          <select class="setting-select" id="st-type-${m.id}" onchange="onTypeChange('${m.id}')">
-            <option value="freeform"  ${cfg.type==='freeform' ?'selected':''}>自由入力（何でもOK）</option>
-            <option value="minlength" ${cfg.type==='minlength'?'selected':''}>最小文字数</option>
-            <option value="keyword"   ${cfg.type==='keyword'  ?'selected':''}>回答一致</option>
-          </select>
-        </div>
-        <div class="setting-sub-row ${cfg.type==='minlength'?'visible':''}" id="sr-minlen-${m.id}">
-          <div class="setting-label">最小文字数</div>
-          <input class="setting-input" id="st-minlen-${m.id}" type="number" min="1" max="50" value="${cfg.minLength}" style="width:80px;flex:none" />
-          <span style="font-size:.78rem;color:var(--muted)">文字以上</span>
-        </div>
-        <div class="setting-sub-row ${cfg.type!=='freeform'?'visible':''}" id="sr-answers-${m.id}">
-          <div class="setting-label">回答</div>
-          <div style="flex:1">
-            <input class="setting-input" id="st-answers-${m.id}" type="text"
-              placeholder="複数ある場合はカンマ区切り"
-              value="${escHtml(cfg.answers.join(', '))}" style="width:100%" />
-            <div class="setting-hint-text" style="margin-top:.4rem">大文字小文字は区別しません</div>
-          </div>
-        </div>
-        <div class="setting-row" style="margin-top:.5rem">
-          <div class="setting-label">質問文</div>
-          <input class="setting-input" id="st-question-${m.id}" type="text" value="${escHtml(cfg.question)}" />
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">ヒント</div>
-          <input class="setting-input" id="st-hint-${m.id}" type="text" value="${escHtml(cfg.hint)}" />
-        </div>
-        ` : ''}
-
-        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem">
-          <button class="btn-sm" onclick="saveMissionSetting('${m.id}')">💾 保存</button>
-          <span id="st-saved-${m.id}" style="font-size:.75rem;color:var(--success);min-height:1.2em"></span>
+      ${isInput ? `
+      <div class="setting-row" style="margin-top:.5rem">
+        <div class="setting-label">判定方式</div>
+        <select class="setting-select" id="st-type-${m.id}" onchange="onTypeChange('${m.id}')">
+          <option value="freeform"  ${cfg.type==='freeform' ?'selected':''}>自由入力（何でもOK）</option>
+          <option value="minlength" ${cfg.type==='minlength'?'selected':''}>最小文字数</option>
+          <option value="keyword"   ${cfg.type==='keyword'  ?'selected':''}>回答一致</option>
+        </select>
+      </div>
+      <div class="setting-sub-row ${cfg.type==='minlength'?'visible':''}" id="sr-minlen-${m.id}">
+        <div class="setting-label">最小文字数</div>
+        <input class="setting-input" id="st-minlen-${m.id}" type="number" min="1" max="50" value="${cfg.minLength}" style="width:80px;flex:none" />
+        <span style="font-size:.78rem;color:var(--muted)">文字以上</span>
+      </div>
+      <div class="setting-sub-row ${cfg.type!=='freeform'?'visible':''}" id="sr-answers-${m.id}">
+        <div class="setting-label">回答</div>
+        <div style="flex:1">
+          <input class="setting-input" id="st-answers-${m.id}" type="text"
+            placeholder="複数ある場合はカンマ区切り"
+            value="${escHtml(cfg.answers.join(', '))}" style="width:100%" />
+          <div class="setting-hint-text" style="margin-top:.4rem">大文字小文字は区別しません</div>
         </div>
       </div>
+      <div class="setting-row" style="margin-top:.5rem">
+        <div class="setting-label">質問文</div>
+        <input class="setting-input" id="st-question-${m.id}" type="text" value="${escHtml(cfg.question)}" />
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">ヒント</div>
+        <input class="setting-input" id="st-hint-${m.id}" type="text" value="${escHtml(cfg.hint)}" />
+      </div>
+      ` : ''}
+
+      <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem">
+        <button class="btn-sm" onclick="saveMissionSetting('${m.id}')">💾 保存</button>
+        <span id="st-saved-${m.id}" style="font-size:.75rem;color:var(--success);min-height:1.2em"></span>
+      </div>
+    </div>
+  `;
+}
+
+function renderSettingsPanel() {
+  const container = document.getElementById('settings-cards');
+  if (!MISSIONS.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:.8rem">ミッションなし</div>';
+    return;
+  }
+  // カテゴリ順にグループ化して表示
+  const cats = [...new Set(MISSIONS.map(m => m.cat))].sort();
+  container.innerHTML = cats.map(cat => {
+    const ms = MISSIONS.filter(m => m.cat === cat);
+    const catCfg = CAT_CONFIG[cat] || { label: { ja: 'カテゴリ' + cat }, color: 'var(--muted)' };
+    const label = typeof catCfg.label === 'object' ? catCfg.label.ja : catCfg.label;
+    return `
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:${catCfg.color};margin:1rem 0 .5rem;text-transform:uppercase">${label}</div>
+      ${ms.map(renderMissionCard).join('')}
     `;
   }).join('');
 }
