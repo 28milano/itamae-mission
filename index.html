@@ -1163,6 +1163,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('nav-tab').style.display = 'flex';
     applyLang();
     showScreen('missions');
+    startSessionWatcher();
     return;
   }
 
@@ -1171,6 +1172,37 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 function showRegister() { showScreen('register'); }
+
+// ── SESSION WATCHER ──────────────────────────────────────────
+// adminで削除されたユーザーを検知してセッションをリセットする
+let sessionWatchTimer = null;
+
+function clearSession() {
+  ['itamae_uid','itamae_name','itamae_ig','itamae_li','itamae_cleared'].forEach(k => localStorage.removeItem(k));
+  userId = null; userName = ''; userOrg = ''; userIg = ''; userLi = ''; cleared = {};
+  stopRankingListener();
+  if (sessionWatchTimer) { clearInterval(sessionWatchTimer); sessionWatchTimer = null; }
+  document.getElementById('nav-tab').style.display = 'none';
+}
+
+async function checkSessionAlive() {
+  if (!userId || !fbUrl) return;
+  try {
+    const userData = await fbGet('/users/' + userId);
+    // null = Firebaseから消えた（adminが削除）
+    if (userData === null) {
+      clearSession();
+      showToast(t('セッションがリセットされました', 'Session has been reset'));
+      showScreen('register');
+    }
+  } catch(e) { /* ネットワークエラーは無視 */ }
+}
+
+function startSessionWatcher() {
+  if (sessionWatchTimer) return;
+  // 30秒ごとにFirebaseでユーザーの存在確認
+  sessionWatchTimer = setInterval(checkSessionAlive, 30000);
+}
 
 async function qrLandClear() {
   const name = document.getElementById('qrl-name').value.trim();
@@ -1259,6 +1291,7 @@ async function startMission() {
   document.getElementById('nav-tab').style.display = 'flex';
   try { renderMissions(); } catch(e) { console.warn('renderMissions error', e); }
   showScreen('missions');
+  startSessionWatcher();
 }
 
 // ── RENDER ────────────────────────────────────────────────────
