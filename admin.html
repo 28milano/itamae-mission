@@ -355,7 +355,20 @@
         </div>
       </div>
 
-      <!-- ④ URL設定 -->
+      <!-- ④ Firebase接続テスト -->
+      <div class="acc-section">
+        <div class="acc-header" onclick="toggleAcc('acc-fbtest')">
+          <span>🔌 Firebase接続テスト</span>
+          <span class="acc-arrow" id="arrow-acc-fbtest">▼</span>
+        </div>
+        <div class="acc-body" id="acc-fbtest">
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">接続できない場合はFirebase ConsoleでSecurityRulesを確認してください。</div>
+          <button class="btn-sm" onclick="testFirebase()">🔍 接続テストを実行</button>
+          <div id="fb-test-result" style="margin-top:.75rem;font-size:.78rem;line-height:1.8"></div>
+        </div>
+      </div>
+
+      <!-- ⑤ URL設定 -->
       <div class="acc-section">
         <div class="acc-header" onclick="toggleAcc('acc-url')">
           <span>🔗 URL設定（通常変更不要）</span>
@@ -502,12 +515,20 @@ if (_savedAppUrl && _savedAppUrl.includes('admin.html')) localStorage.removeItem
 let appUrl = localStorage.getItem('itamae_app_url') || (location.origin + location.pathname.replace(/admin\.html$/, ''));
 
 // ── FIREBASE ─────────────────────────────────────────────────
-function fbReq(path, method, data) {
-  if (!fbUrl) return Promise.resolve(null);
+async function fbReq(path, method, data) {
+  if (!fbUrl) return null;
   const url = fbUrl.replace(/\/$/,'') + path + '.json';
   const opts = { method, headers:{'Content-Type':'application/json'} };
   if (data !== undefined) opts.body = JSON.stringify(data);
-  return fetch(url, opts).then(r=>r.json()).catch(()=>null);
+  try {
+    const r = await fetch(url, opts);
+    const d = await r.json();
+    if (!r.ok) console.error('[Firebase]', method, path, r.status, d);
+    return d;
+  } catch(e) {
+    console.error('[Firebase fetch error]', method, path, e.message);
+    return { _fetchError: e.message };
+  }
 }
 const fbGet = p => fbReq(p,'GET');
 const fbSet = (p,d) => fbReq(p,'PUT',d);
@@ -1220,11 +1241,15 @@ async function addCustomMission() {
   try {
     const result = await fbSet('/custom_missions/' + id, mission);
     // Firebase returns the written object on success, or {error:...} / null on failure
-    if (!result || result.error) {
+    if (!result || result.error || result._fetchError) {
       resultEl.style.color = '#ef4444';
-      resultEl.textContent = result?.error
-        ? 'Firebaseエラー: ' + result.error
-        : '保存に失敗しました（Firebaseに接続できません）';
+      if (result?.error) {
+        resultEl.textContent = 'Firebaseエラー: ' + result.error;
+      } else if (result?._fetchError) {
+        resultEl.textContent = 'ネットワークエラー: ' + result._fetchError;
+      } else {
+        resultEl.textContent = '保存に失敗しました（不明なエラー）';
+      }
       return;
     }
     resultEl.style.color = 'var(--success)';
@@ -1307,6 +1332,45 @@ async function deleteCustomMission(id) {
     await fbReq('/custom_missions/' + id, 'DELETE');
     loadCustomMissionsList();
   } catch(e) { alert('削除に失敗しました'); }
+}
+
+async function testFirebase() {
+  const el = document.getElementById('fb-test-result');
+  el.innerHTML = '実行中...';
+  const lines = [];
+
+  // 1. Read test
+  const readResult = await fbGet('/settings/missions');
+  if (readResult && !readResult._fetchError && !readResult.error) {
+    lines.push('✅ 読み込み（GET）: 成功');
+  } else if (readResult?.error) {
+    lines.push('❌ 読み込み（GET）: Firebaseエラー → ' + readResult.error);
+  } else if (readResult?._fetchError) {
+    lines.push('❌ 読み込み（GET）: ネットワークエラー → ' + readResult._fetchError);
+  } else {
+    lines.push('⚠️ 読み込み（GET）: データなし（設定未保存の可能性）');
+  }
+
+  // 2. Write test
+  const testData = { _test: true, ts: Date.now() };
+  const writeResult = await fbReq('/_connection_test', 'PUT', testData);
+  if (writeResult && !writeResult._fetchError && !writeResult.error) {
+    lines.push('✅ 書き込み（PUT）: 成功');
+    // cleanup
+    await fbReq('/_connection_test', 'DELETE');
+  } else if (writeResult?.error) {
+    lines.push('❌ 書き込み（PUT）: Firebaseエラー → ' + writeResult.error
+      + '<br>　→ Firebase Console → Realtime Database → ルール を確認してください');
+  } else if (writeResult?._fetchError) {
+    lines.push('❌ 書き込み（PUT）: ネットワークエラー → ' + writeResult._fetchError);
+  } else {
+    lines.push('❌ 書き込み（PUT）: 不明なエラー（コンソールを確認）');
+  }
+
+  // 3. URL info
+  lines.push('🔗 Firebase URL: ' + fbUrl);
+
+  el.innerHTML = lines.join('<br>');
 }
 
 function showToast(msg) {
