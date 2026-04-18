@@ -508,7 +508,7 @@ const CAT_CONFIG = {
 
 // ── STATE ────────────────────────────────────────────────────
 let userId=null, userName='', userOrg='', cleared={};
-let fbUrl = 'https://itamae-mission-default-rtdb.asia-southeast1.firebaseio.com';
+let fbUrl = 'https://itamae-mission.asia-southeast1.firebasedatabase.app';
 // 古い間違ったappUrl（admin.htmlを含む）を自動修正
 const _savedAppUrl = localStorage.getItem('itamae_app_url');
 if (_savedAppUrl && _savedAppUrl.includes('admin.html')) localStorage.removeItem('itamae_app_url');
