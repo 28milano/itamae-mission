@@ -1061,7 +1061,7 @@ function mText(m, field) {
 const CAT_CONFIG = {
   A:{ label:{ ja:'カテゴリA：つながるミッション', en:'Category A: Connect' }, color:'var(--cat-a)' },
   B:{ label:{ ja:'カテゴリB：SusHi Tech Tokyo探索ミッション', en:'Category B: Explore SusHi Tech Tokyo' }, color:'var(--cat-b)' },
-  C:{ label:{ ja:'カテゴリC：クイズミッション', en:'Category C: Quiz' }, desc:{ ja:'SusHi Tech Tokyoにまつわるクイズが出題されます', en:'Answer quizzes about SusHi Tech Tokyo' }, color:'var(--cat-c)' },
+  C:{ label:{ ja:'カテゴリC：クイズミッション', en:'Category C: Quiz' }, desc:{ ja:'SusHi Tech Tokyoクイズミッション', en:'SusHi Tech Tokyo Quiz' }, color:'var(--cat-c)' },
 };
 
 // ── STATE ────────────────────────────────────────────────────
@@ -1340,7 +1340,7 @@ function missionCard(m) {
       actionBtn = `<button class="btn-scan-qr" onclick="event.stopPropagation();openScanner('${m.id}')">📷 ${t('QRをスキャン','Scan QR')}</button>`;
     } else if (isKeyword) {
       actionBtn = isQuiz
-        ? `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">🧠 ${t('クイズに挑戦','Take Quiz')}</button>`
+        ? `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">✏️ ${t('回答を入力','Enter Answer')}</button>`
         : `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">✏️ ${t('答えを入力','Enter Answer')}</button>`;
     }
   }
