@@ -1023,14 +1023,30 @@ let MISSIONS = [
     text:  { ja:'学生団体「Business Contest KING 実行委員会」のブースに訪れた', en:'Visited the "Business Contest KING" student organization booth' },
     note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
     mode:'qr' },
-  { id:'c1', cat:'C', pts:20,
-    text:      { ja:'ITAMAEから合言葉をもらう', en:'Get the secret word from ITAMAE' },
-    note:      { ja:'ITAMAEメンバーに声をかけて合言葉をもらおう', en:'Talk to an ITAMAE member to get the secret word' },
+  { id:'c1', cat:'C', pts:15,
+    text:      { ja:'SusHi Tech Tokyo クイズ ①', en:'SusHi Tech Tokyo Quiz ①' },
+    note:      { ja:'SusHi Tech Tokyoにまつわるクイズに答えよう', en:'Answer a quiz about SusHi Tech Tokyo' },
     mode:'keyword',
-    question:  { ja:'合言葉を入力してください', en:'Enter the secret word' },
-    placeholder:{ ja:'合言葉', en:'Secret word' },
-    hint:      { ja:'ITAMAEメンバーに聞いてみよう', en:'Ask an ITAMAE member!' },
-    answers:['ありがとう'] },
+    question:  { ja:'Q. （問題文①をここに入力）', en:'Q. (Insert question ① here)' },
+    placeholder:{ ja:'答えを入力', en:'Enter answer' },
+    hint:      { ja:'ヒント：（ヒントをここに入力）', en:'Hint: (Insert hint here)' },
+    answers:['placeholder1'] },
+  { id:'c2', cat:'C', pts:15,
+    text:      { ja:'SusHi Tech Tokyo クイズ ②', en:'SusHi Tech Tokyo Quiz ②' },
+    note:      { ja:'SusHi Tech Tokyoにまつわるクイズに答えよう', en:'Answer a quiz about SusHi Tech Tokyo' },
+    mode:'keyword',
+    question:  { ja:'Q. （問題文②をここに入力）', en:'Q. (Insert question ② here)' },
+    placeholder:{ ja:'答えを入力', en:'Enter answer' },
+    hint:      { ja:'ヒント：（ヒントをここに入力）', en:'Hint: (Insert hint here)' },
+    answers:['placeholder2'] },
+  { id:'c3', cat:'C', pts:15,
+    text:      { ja:'SusHi Tech Tokyo クイズ ③', en:'SusHi Tech Tokyo Quiz ③' },
+    note:      { ja:'SusHi Tech Tokyoにまつわるクイズに答えよう', en:'Answer a quiz about SusHi Tech Tokyo' },
+    mode:'keyword',
+    question:  { ja:'Q. （問題文③をここに入力）', en:'Q. (Insert question ③ here)' },
+    placeholder:{ ja:'答えを入力', en:'Enter answer' },
+    hint:      { ja:'ヒント：（ヒントをここに入力）', en:'Hint: (Insert hint here)' },
+    answers:['placeholder3'] },
 ];
 
 // helper to get localized field
@@ -1045,7 +1061,7 @@ function mText(m, field) {
 const CAT_CONFIG = {
   A:{ label:{ ja:'カテゴリA：つながるミッション', en:'Category A: Connect' }, color:'var(--cat-a)' },
   B:{ label:{ ja:'カテゴリB：SusHi Tech Tokyo探索ミッション', en:'Category B: Explore SusHi Tech Tokyo' }, color:'var(--cat-b)' },
-  C:{ label:{ ja:'カテゴリC：合言葉ミッション', en:'Category C: Secret Word' }, color:'var(--cat-c)' },
+  C:{ label:{ ja:'カテゴリC：クイズミッション', en:'Category C: Quiz' }, desc:{ ja:'SusHi Tech Tokyoにまつわるクイズが出題されます', en:'Answer quizzes about SusHi Tech Tokyo' }, color:'var(--cat-c)' },
 };
 
 // ── STATE ────────────────────────────────────────────────────
@@ -1291,6 +1307,7 @@ function renderMissions() {
     // カテゴリB・Cは通常のミッションカード表示
     const items = MISSIONS.filter(m => m.cat === cat);
     const catCleared = items.filter(m => cleared[m.id]).length;
+    const catDesc = cfg.desc ? (typeof cfg.desc === 'object' ? (cfg.desc[lang] || cfg.desc.ja) : cfg.desc) : '';
     return `
       <div class="cat-section">
         <div class="cat-header">
@@ -1298,6 +1315,7 @@ function renderMissions() {
           <div class="cat-title" style="color:${cfg.color}">${catLabel}</div>
           <div class="cat-sub">${catCleared}/${items.length}</div>
         </div>
+        ${catDesc ? `<div style="font-size:.78rem;color:var(--muted);margin:-0.25rem 0 .6rem;padding:0 .1rem">${catDesc}</div>` : ''}
         ${items.map(m => missionCard(m)).join('')}
       </div>
     `;
@@ -1309,16 +1327,21 @@ function missionCard(m) {
   const isQr = m.mode === 'qr';
   const isKeyword = m.mode === 'keyword';
 
+  const isQuiz = m.cat === 'C';
   const typeLabel = isQr
     ? '<span class="badge-type qr">QR</span>'
-    : `<span class="badge-type self">${t('入力','Input')}</span>`;
+    : isQuiz
+      ? '<span class="badge-type self">QUIZ</span>'
+      : `<span class="badge-type self">${t('入力','Input')}</span>`;
 
   let actionBtn = '';
   if (!done) {
     if (isQr) {
       actionBtn = `<button class="btn-scan-qr" onclick="event.stopPropagation();openScanner('${m.id}')">📷 ${t('QRをスキャン','Scan QR')}</button>`;
     } else if (isKeyword) {
-      actionBtn = `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">✏️ ${t('答えを入力','Enter Answer')}</button>`;
+      actionBtn = isQuiz
+        ? `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">🧠 ${t('クイズに挑戦','Take Quiz')}</button>`
+        : `<button class="btn-keyword" onclick="event.stopPropagation();openKeywordModal('${m.id}')">✏️ ${t('答えを入力','Enter Answer')}</button>`;
     }
   }
 
