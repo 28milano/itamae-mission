@@ -322,8 +322,6 @@
         合言葉・最小文字数を変更する場合のみ操作してください。
       </div>
       <div id="settings-cards"></div>
-      <button class="btn-primary" style="margin-top:1rem" onclick="saveSettings()">💾 設定を保存</button>
-      <div id="settings-saved" style="text-align:center;font-size:.78rem;color:var(--success);margin-top:.6rem;min-height:1.2em"></div>
 
       <!-- ④ URL設定 -->
       <div class="section-title" style="margin-top:1.5rem">④ URL設定（通常変更不要）</div>
@@ -779,30 +777,35 @@ async function loadMissionSettings() {
   if (ls) { try { missionSettings = JSON.parse(ls); } catch(e) {} }
 }
 
-async function saveSettings() {
-  // read form values
-  const kwMissions = MISSIONS.filter(m => m.mode === 'keyword');
-  kwMissions.forEach(m => {
-    const type       = document.getElementById('st-type-'+m.id)?.value || 'freeform';
-    const answersRaw = document.getElementById('st-answers-'+m.id)?.value || '';
-    const minLen     = parseInt(document.getElementById('st-minlen-'+m.id)?.value) || 3;
-    const question   = document.getElementById('st-question-'+m.id)?.value.trim() || m.question;
-    const hint       = document.getElementById('st-hint-'+m.id)?.value.trim() || m.hint;
-    const placeholder= document.getElementById('st-placeholder-'+m.id)?.value.trim() || m.placeholder;
+async function saveMissionSetting(mId) {
+  const m = MISSIONS.find(x => x.id === mId);
+  if (!m) return;
+  const type        = document.getElementById('st-type-'+mId)?.value || 'freeform';
+  const answersRaw  = document.getElementById('st-answers-'+mId)?.value || '';
+  const minLen      = parseInt(document.getElementById('st-minlen-'+mId)?.value) || 3;
+  const question    = document.getElementById('st-question-'+mId)?.value.trim() || mText(m,'question');
+  const hint        = document.getElementById('st-hint-'+mId)?.value.trim() || mText(m,'hint');
+  const placeholder = document.getElementById('st-placeholder-'+mId)?.value.trim() || mText(m,'placeholder');
 
-    missionSettings[m.id] = {
-      type, minLength: minLen,
-      answers: answersRaw.split(/[,、\n]/).map(s=>s.trim()).filter(Boolean),
-      question, hint, placeholder
-    };
-  });
+  const setting = {
+    type, minLength: minLen,
+    answers: answersRaw.split(/[,、\n]/).map(s=>s.trim()).filter(Boolean),
+    question, hint, placeholder
+  };
 
+  missionSettings[mId] = setting;
+
+  // ミッションごとのパスに書き込む（他のミッションに影響しない）
   if (fbUrl) {
-    await fbSet('/settings/missions', missionSettings);
+    await fbSet('/settings/missions/' + mId, setting);
   }
   localStorage.setItem('itamae_mission_settings', JSON.stringify(missionSettings));
-  document.getElementById('settings-saved').textContent = '✓ 保存しました';
-  setTimeout(() => { document.getElementById('settings-saved').textContent = ''; }, 2500);
+
+  const savedEl = document.getElementById('st-saved-'+mId);
+  if (savedEl) {
+    savedEl.textContent = '✓ 保存しました';
+    setTimeout(() => { savedEl.textContent = ''; }, 2500);
+  }
 }
 
 function getMissionConfig(m) {
@@ -865,6 +868,10 @@ function renderSettingsPanel() {
         <div class="setting-row">
           <div class="setting-label">プレース</div>
           <input class="setting-input" id="st-placeholder-${m.id}" type="text" value="${escHtml(cfg.placeholder)}" />
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem">
+          <button class="btn-sm" onclick="saveMissionSetting('${m.id}')">💾 この問題を保存</button>
+          <span id="st-saved-${m.id}" style="font-size:.75rem;color:var(--success);min-height:1.2em"></span>
         </div>
       </div>
     `;
