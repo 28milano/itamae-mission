@@ -1215,8 +1215,18 @@ async function addCustomMission() {
     return;
   }
 
+  resultEl.style.color = 'var(--muted)';
+  resultEl.textContent = '保存中...';
   try {
-    await fbSet('/custom_missions/' + id, mission);
+    const result = await fbSet('/custom_missions/' + id, mission);
+    // Firebase returns the written object on success, or {error:...} / null on failure
+    if (!result || result.error) {
+      resultEl.style.color = '#ef4444';
+      resultEl.textContent = result?.error
+        ? 'Firebaseエラー: ' + result.error
+        : '保存に失敗しました（Firebaseに接続できません）';
+      return;
+    }
     resultEl.style.color = 'var(--success)';
     resultEl.textContent = '✓ ミッションを追加しました';
     ['new-text-ja','new-text-en','new-answers','new-question-ja','new-question-en'].forEach(elId => {
@@ -1224,10 +1234,17 @@ async function addCustomMission() {
       if (el) el.value = '';
     });
     document.getElementById('new-pts').value = '10';
-    loadCustomMissionsList();
+    // 追加済みリストを更新して自動的に開く
+    await loadCustomMissionsList();
+    const body  = document.getElementById('acc-custom');
+    const arrow = document.getElementById('arrow-acc-custom');
+    if (body && !body.classList.contains('open')) {
+      body.classList.add('open');
+      if (arrow) arrow.classList.add('open');
+    }
   } catch(e) {
     resultEl.style.color = '#ef4444';
-    resultEl.textContent = '保存に失敗しました';
+    resultEl.textContent = '保存に失敗しました: ' + e.message;
   }
 }
 

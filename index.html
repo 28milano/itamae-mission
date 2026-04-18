@@ -1552,12 +1552,14 @@ async function loadCustomMissions() {
   if (!fbUrl) return;
   try {
     const customs = await fbGet('/custom_missions');
+    // カスタムミッションを一旦全削除して最新状態に同期（削除されたものも消える）
+    for (let i = MISSIONS.length - 1; i >= 0; i--) {
+      if (MISSIONS[i].custom) MISSIONS.splice(i, 1);
+    }
     if (!customs) return;
-    const BASE_IDS = ['b1','b2','c1'];
     Object.values(customs).forEach(m => {
       if (!m || !m.id) return;
-      if (BASE_IDS.includes(m.id)) return; // 固定ミッションは上書きしない
-      if (!MISSIONS.find(x => x.id === m.id)) MISSIONS.push(m);
+      MISSIONS.push(m);
     });
   } catch(e) { console.warn('custom missions load failed', e); }
 }
@@ -1845,7 +1847,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
 }
-function switchTab(tab) {
+async function switchTab(tab) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-' + tab).classList.add('active');
   if (tab === 'ranking') {
@@ -1858,6 +1860,8 @@ function switchTab(tab) {
   } else {
     showScreen('missions');
     stopRankingListener();
+    // カスタムミッションを再取得してから描画（adminで追加されたものを反映）
+    await loadCustomMissions();
     renderMissions();
   }
 }
