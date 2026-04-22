@@ -749,8 +749,8 @@
       <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
     </div>
     <div class="progress-label">
-      <span data-ja="進捗" data-en="Progress">進捗</span>
-      <span><span class="count" id="prog-count">0</span> / <span id="prog-total"></span> <span data-ja="クリア" data-en="cleared">クリア</span></span>
+      <span data-ja="ためたポイント" data-en="Points Earned">ためたポイント</span>
+      <span><span class="count" id="prog-count">0</span>pt / <span id="prog-total"></span>pt</span>
     </div>
   </div>
 
@@ -1296,13 +1296,12 @@ function calcMyPts() {
 }
 
 function renderMissions() {
-  const total = Object.keys(cleared).filter(id => MISSIONS.find(m => m.id === id)).length;
   const pts = calcMyPts();
-  const totalMissions = MISSIONS.length;
+  const maxPts = MISSIONS.reduce((s, m) => s + (m.pts || 0), 0);
 
-  document.getElementById('prog-fill').style.width = (total / totalMissions * 100) + '%';
-  document.getElementById('prog-count').textContent = total;
-  document.getElementById('prog-total').textContent = totalMissions;
+  document.getElementById('prog-fill').style.width = maxPts > 0 ? Math.min(pts / maxPts * 100, 100) + '%' : '0%';
+  document.getElementById('prog-count').textContent = pts;
+  document.getElementById('prog-total').textContent = maxPts;
   document.getElementById('disp-pts').textContent = pts + 'pt';
 
 
