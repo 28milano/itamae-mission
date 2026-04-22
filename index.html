@@ -1298,14 +1298,26 @@ function renderMissions() {
   const total = Object.keys(cleared).filter(id => MISSIONS.find(m => m.id === id)).length;
   const catColor = { A: 'var(--cat-a)', B: 'var(--cat-b)', C: 'var(--cat-c)' };
 
-  document.getElementById('seg-bar').innerHTML = MISSIONS.map(m => {
-    const done = !!cleared[m.id];
-    const col = catColor[m.cat] || 'var(--accent)';
-    return `<div style="flex:1;height:14px;border-radius:4px;` +
-      `background:${done ? col : 'var(--surface2)'};` +
-      `border:1.5px solid ${done ? col : 'var(--border)'};` +
-      `transition:background .3s,border-color .3s"></div>`;
-  }).join('');
+  const catGroups = ['A','B','C'].map(cat => {
+    const ms = MISSIONS.filter(m => m.cat === cat);
+    if (ms.length === 0) return '';
+    const col = catColor[cat] || 'var(--accent)';
+    const segs = ms.map(m => {
+      const done = !!cleared[m.id];
+      return `<div style="flex:1;height:12px;border-radius:3px;` +
+        `background:${done ? col : 'var(--surface2)'};` +
+        `border:1.5px solid ${done ? col : 'var(--border)'};` +
+        `transition:background .3s,border-color .3s"></div>`;
+    }).join('');
+    const doneCount = ms.filter(m => !!cleared[m.id]).length;
+    return `<div style="display:flex;flex-direction:column;gap:3px;flex:${ms.length}">` +
+      `<div style="display:flex;gap:3px">${segs}</div>` +
+      `<div style="font-size:.6rem;color:${col};font-weight:700;letter-spacing:.05em">${cat} ${doneCount}/${ms.length}</div>` +
+      `</div>`;
+  }).filter(Boolean);
+
+  document.getElementById('seg-bar').innerHTML =
+    `<div style="display:flex;gap:8px;width:100%">${catGroups.join('')}</div>`;
 
   document.getElementById('prog-count').textContent = total;
   document.getElementById('prog-total').textContent = MISSIONS.length;
