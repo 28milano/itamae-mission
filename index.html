@@ -750,7 +750,7 @@
     </div>
     <div class="progress-label">
       <span data-ja="ためたポイント" data-en="Points Earned">ためたポイント</span>
-      <span><span class="count" id="prog-count">0</span>pt / <span id="prog-total"></span>pt</span>
+      <span><span class="count" id="prog-count">0</span>pt</span>
     </div>
   </div>
 
@@ -1299,9 +1299,9 @@ function renderMissions() {
   const pts = calcMyPts();
   const maxPts = MISSIONS.reduce((s, m) => s + (m.pts || 0), 0);
 
-  document.getElementById('prog-fill').style.width = maxPts > 0 ? Math.min(pts / maxPts * 100, 100) + '%' : '0%';
+  const refPts = Math.max(maxPts, pts, 1);
+  document.getElementById('prog-fill').style.width = Math.min(pts / refPts * 100, 100) + '%';
   document.getElementById('prog-count').textContent = pts;
-  document.getElementById('prog-total').textContent = maxPts;
   document.getElementById('disp-pts').textContent = pts + 'pt';
 
 
