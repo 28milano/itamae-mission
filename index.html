@@ -1292,7 +1292,17 @@ async function startMission() {
       const all = await fbGet('/users');
       if (all) {
         const match = Object.entries(all).find(([k,v]) => v.name===name);
-        if (match) { userId=match[0]; cleared=match[1].cleared||{}; userIg=match[1].ig||ig; userLi=match[1].li||li; }
+        if (match) {
+          const existingUid = localStorage.getItem('itamae_uid');
+          if (existingUid && existingUid === match[0]) {
+            // 同じ人が再ログイン → そのまま復元
+            userId=match[0]; cleared=match[1].cleared||{}; userIg=match[1].ig||ig; userLi=match[1].li||li;
+          } else {
+            // 別の人が同じ名前を使おうとしている → エラー
+            alert(t('この名前はすでに使われています。\n別の名前を入力してください。', 'This name is already taken.\nPlease choose a different name.'));
+            return;
+          }
+        }
       }
       await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, li:userLi, cleared, registeredAt:Date.now() });
     } catch(e) { console.warn('Firebase error', e); }
