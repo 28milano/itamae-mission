@@ -571,7 +571,7 @@
     padding:.5rem .75rem; background:var(--surface2); border-radius:6px;
   }
 
-  /* ── EMOJI PICKER ── */
+  /* ── EMOJI PICKER (register form) ── */
   .emoji-current-wrap { text-align:center; margin-bottom:.6rem; }
   .emoji-current { font-size:2.8rem; display:inline-block; }
   .emoji-grid { display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem; }
@@ -582,6 +582,40 @@
   }
   .emoji-opt:hover { background:var(--surface2); }
   .emoji-opt.selected { border-color:var(--accent); background:rgba(255,107,53,.1); }
+
+  /* ── PROFILE AVATAR ── */
+  .profile-avatar-area {
+    background:linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+    padding:1.5rem 1.25rem 1rem;
+    display:flex; flex-direction:column; align-items:center; gap:.5rem;
+    border-bottom:1px solid var(--border);
+  }
+  .profile-avatar-btn {
+    position:relative; background:var(--surface2);
+    border:3px solid var(--border); border-radius:50%;
+    width:88px; height:88px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:3rem; cursor:pointer;
+    transition:border-color .15s, transform .1s;
+    line-height:1;
+  }
+  .profile-avatar-btn:active { transform:scale(.95); }
+  .profile-avatar-btn:hover { border-color:var(--accent); }
+  .profile-avatar-edit {
+    position:absolute; bottom:-2px; right:-2px;
+    background:var(--accent); border-radius:50%;
+    width:26px; height:26px; font-size:.85rem;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--bg); pointer-events:none;
+  }
+  #profile-avatar-name {
+    font-size:.85rem; font-weight:700; color:var(--muted);
+  }
+  #profile-emoji-picker-wrap {
+    width:100%; background:var(--surface);
+    border:1px solid var(--border); border-radius:12px;
+    padding:.75rem; margin-top:.25rem;
+  }
 
   @media print {
     .nav-tab, .admin-header, #panel-stats, .btn-print, .admin-tabs, .qr-intro { display:none!important; }
@@ -918,7 +952,20 @@
       <div style="font-size:.9rem;font-weight:700">⚙️ <span data-ja="プロフィール編集" data-en="Edit Profile">プロフィール編集</span></div>
     </div>
   </div>
-  <div style="padding:1.25rem 1.25rem 2rem">
+
+  <!-- アバター -->
+  <div class="profile-avatar-area">
+    <button class="profile-avatar-btn" onclick="toggleProfileEmojiPicker()" aria-label="絵文字を変更">
+      <span id="profile-emoji-current">🌟</span>
+      <div class="profile-avatar-edit">✏️</div>
+    </button>
+    <div id="profile-avatar-name"></div>
+    <div id="profile-emoji-picker-wrap" style="display:none">
+      <div class="emoji-grid" id="profile-emoji-grid"></div>
+    </div>
+  </div>
+
+  <div style="padding:.75rem 1.25rem 2rem">
     <div class="form-group">
       <label class="form-label" data-ja="名前" data-en="Name">名前</label>
       <input class="form-input" id="profile-name" type="text" maxlength="20" />
@@ -938,11 +985,6 @@
     <div class="form-group">
       <label class="form-label" data-ja="Facebook（任意）" data-en="Facebook (optional)">Facebook（任意）</label>
       <input class="form-input" id="profile-facebook" type="text" placeholder="https://www.facebook.com/username" maxlength="100" />
-    </div>
-    <div class="form-group">
-      <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
-      <div class="emoji-current-wrap"><span class="emoji-current" id="profile-emoji-current">🌟</span></div>
-      <div class="emoji-grid" id="profile-emoji-grid"></div>
     </div>
     <button class="btn-primary" onclick="saveProfile()"><span data-ja="保存する" data-en="Save">保存する</span></button>
 
@@ -1303,6 +1345,19 @@ function selectEmoji(gridId, currentId, em) {
   grid.querySelectorAll('.emoji-opt').forEach(b => {
     b.classList.toggle('selected', b.textContent === em);
   });
+  // プロフィール画面では選択後にピッカーを閉じる
+  if (gridId === 'profile-emoji-grid') {
+    setTimeout(() => {
+      document.getElementById('profile-emoji-picker-wrap').style.display = 'none';
+    }, 150);
+  }
+}
+
+function toggleProfileEmojiPicker() {
+  const wrap = document.getElementById('profile-emoji-picker-wrap');
+  const isHidden = wrap.style.display === 'none';
+  wrap.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) renderEmojiGrid('profile-emoji-grid', 'profile-emoji-current');
 }
 
 // ── SESSION WATCHER ──────────────────────────────────────────
@@ -2061,6 +2116,8 @@ async function switchTab(tab) {
     document.getElementById('profile-facebook').value = userFb ? 'https://www.facebook.com/' + userFb : '';
     const pec = document.getElementById('profile-emoji-current');
     pec.textContent = userEmoji || '🌟';
+    document.getElementById('profile-avatar-name').textContent = userName;
+    document.getElementById('profile-emoji-picker-wrap').style.display = 'none';
     renderEmojiGrid('profile-emoji-grid', 'profile-emoji-current');
   } else {
     showScreen('missions');
