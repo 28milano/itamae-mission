@@ -218,6 +218,7 @@
       <button class="admin-tab active" id="tab-stats" onclick="switchAdminTab('stats')">統計</button>
       <button class="admin-tab" id="tab-qr" onclick="switchAdminTab('qr')">QR印刷</button>
       <button class="admin-tab" id="tab-users" onclick="switchAdminTab('users')">👤ユーザー</button>
+      <button class="admin-tab" id="tab-inquiries" onclick="switchAdminTab('inquiries')">💬問い合わせ</button>
       <button class="admin-tab" id="tab-settings" onclick="switchAdminTab('settings')">⚙️設定</button>
     </div>
   </div>
@@ -258,6 +259,17 @@
         <button class="admin-tab" style="font-size:.72rem" onclick="loadUsers()">↻ 更新</button>
       </div>
       <div id="user-list"></div>
+    </div>
+
+    <!-- INQUIRIES PANEL -->
+    <div id="panel-inquiries" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="section-title" style="margin:0">問い合わせ一覧</div>
+        <button class="admin-tab" style="font-size:.72rem" onclick="loadInquiries()">↻ 更新</button>
+      </div>
+      <div id="inquiry-list">
+        <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:2rem">読み込み中...</div>
+      </div>
     </div>
 
     <!-- SETTINGS PANEL -->
@@ -767,16 +779,18 @@ function toggleAcc(id) {
 }
 
 async function switchAdminTab(tab) {
-  ['stats','qr','settings'].forEach(t => {
+  ['stats','qr','users','inquiries','settings'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('active', tab===t);
   });
-  document.getElementById('panel-stats').style.display    = tab==='stats'    ? 'block' : 'none';
-  document.getElementById('panel-qr').style.display       = tab==='qr'       ? 'block' : 'none';
-  document.getElementById('panel-users').style.display    = tab==='users'    ? 'block' : 'none';
-  document.getElementById('panel-settings').style.display = tab==='settings' ? 'block' : 'none';
-  if (tab==='qr')       buildQrGrid();
-  if (tab==='stats')    loadAdmin();
-  if (tab==='users')    loadUsers();
+  document.getElementById('panel-stats').style.display      = tab==='stats'      ? 'block' : 'none';
+  document.getElementById('panel-qr').style.display         = tab==='qr'         ? 'block' : 'none';
+  document.getElementById('panel-users').style.display      = tab==='users'      ? 'block' : 'none';
+  document.getElementById('panel-inquiries').style.display  = tab==='inquiries'  ? 'block' : 'none';
+  document.getElementById('panel-settings').style.display   = tab==='settings'   ? 'block' : 'none';
+  if (tab==='qr')         buildQrGrid();
+  if (tab==='stats')      loadAdmin();
+  if (tab==='users')      loadUsers();
+  if (tab==='inquiries')  loadInquiries();
   if (tab==='settings') {
     document.getElementById('admin-app-url').value = appUrl;
     await loadCustomMissions();
@@ -784,6 +798,42 @@ async function switchAdminTab(tab) {
     renderSettingsPanel();
     loadCustomMissionsList();
   }
+}
+
+async function loadInquiries() {
+  const el = document.getElementById('inquiry-list');
+  el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:2rem">読み込み中...</div>';
+  try {
+    const data = await fbReq('/inquiries', 'GET');
+    if (!data) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:2rem">問い合わせはまだありません</div>';
+      return;
+    }
+    const items = Object.entries(data).sort((a,b) => b[1].timestamp - a[1].timestamp);
+    el.innerHTML = items.map(([key, q]) => {
+      const date = new Date(q.timestamp).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const isRead = q.read;
+      return `
+        <div style="background:var(--surface2);border:1px solid ${isRead ? 'var(--border)' : 'var(--accent)'};border-radius:10px;padding:1rem;margin-bottom:.75rem;position:relative">
+          ${!isRead ? '<div style="position:absolute;top:.75rem;right:.75rem;background:var(--accent);color:#000;font-size:.6rem;font-weight:700;padding:.15rem .45rem;border-radius:100px">未読</div>' : ''}
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+            <span style="font-weight:700;font-size:.88rem">${q.name || '不明'}</span>
+            <span style="font-size:.7rem;color:var(--muted)">${date}</span>
+          </div>
+          <div style="font-size:.88rem;line-height:1.6;white-space:pre-wrap">${q.message}</div>
+          ${!isRead ? `<button onclick="markRead('${key}')" style="margin-top:.65rem;background:none;border:1px solid var(--border);border-radius:6px;padding:.3rem .75rem;color:var(--muted);font-size:.72rem;cursor:pointer">既読にする</button>` : '<div style="font-size:.7rem;color:var(--muted);margin-top:.5rem">✓ 既読</div>'}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#ef4444;font-size:.85rem;text-align:center;padding:2rem">読み込みに失敗しました</div>';
+  }
+}
+
+async function markRead(key) {
+  try {
+    await fbReq('/inquiries/' + key + '/read', 'PUT', true);
+    loadInquiries();
+  } catch(e) { console.warn(e); }
 }
 
 function saveAdminAppUrl() {

@@ -899,6 +899,21 @@
       <input class="form-input" id="profile-linkedin" type="text" placeholder="https://www.linkedin.com/in/username" maxlength="100" />
     </div>
     <button class="btn-primary" onclick="saveProfile()"><span data-ja="保存する" data-en="Save">保存する</span></button>
+
+    <!-- 問い合わせ -->
+    <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+      <div style="font-size:.88rem;font-weight:700;margin-bottom:.3rem">💬 <span data-ja="運営への問い合わせ" data-en="Contact Organizers">運営への問い合わせ</span></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.85rem;line-height:1.6"
+        data-ja="質問や困ったことがあれば気軽に送ってください。運営が確認します。"
+        data-en="Feel free to send any questions. Organizers will check your message.">質問や困ったことがあれば気軽に送ってください。運営が確認します。</div>
+      <textarea class="form-input" id="inquiry-text" rows="4"
+        placeholder="例：b2のミッションはどうやって達成しますか？"
+        style="resize:none;margin-bottom:.6rem;font-size:.9rem;line-height:1.6"></textarea>
+      <button class="btn-primary" onclick="sendInquiry()">
+        <span data-ja="送信する" data-en="Send">送信する</span>
+      </button>
+      <div id="inquiry-msg" style="font-size:.8rem;text-align:center;margin-top:.6rem;min-height:1.2em"></div>
+    </div>
   </div>
 </div>
 
@@ -1964,6 +1979,39 @@ async function saveProfile() {
     } catch(e) { console.warn('Firebase error', e); }
   }
   showToast(t('プロフィールを保存しました ✓', 'Profile saved ✓'));
+}
+
+// ── INQUIRY ──────────────────────────────────────────────────
+async function sendInquiry() {
+  const msg = document.getElementById('inquiry-text').value.trim();
+  const msgEl = document.getElementById('inquiry-msg');
+  if (!msg) {
+    msgEl.style.color = '#ef4444';
+    msgEl.textContent = t('メッセージを入力してください', 'Please enter a message');
+    return;
+  }
+  if (!fbUrl) {
+    msgEl.style.color = '#ef4444';
+    msgEl.textContent = t('送信できませんでした（Firebase未接続）', 'Cannot send: Firebase not connected');
+    return;
+  }
+  try {
+    const key = Date.now() + '_' + (userId || 'anon');
+    await fbSet('/inquiries/' + key, {
+      name: userName || '不明',
+      userId: userId || '',
+      message: msg,
+      timestamp: Date.now(),
+      read: false
+    });
+    document.getElementById('inquiry-text').value = '';
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = t('送信しました！運営が確認します 👍', 'Sent! Organizers will check your message 👍');
+    setTimeout(() => { msgEl.textContent = ''; }, 4000);
+  } catch(e) {
+    msgEl.style.color = '#ef4444';
+    msgEl.textContent = t('送信に失敗しました。もう一度お試しください', 'Failed to send. Please try again');
+  }
 }
 
 // ── MY QR ────────────────────────────────────────────────────
