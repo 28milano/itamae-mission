@@ -571,6 +571,18 @@
     padding:.5rem .75rem; background:var(--surface2); border-radius:6px;
   }
 
+  /* ── EMOJI PICKER ── */
+  .emoji-current-wrap { text-align:center; margin-bottom:.6rem; }
+  .emoji-current { font-size:2.8rem; display:inline-block; }
+  .emoji-grid { display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem; }
+  .emoji-opt {
+    font-size:1.4rem; padding:.25rem; border-radius:8px;
+    border:2px solid transparent; cursor:pointer; background:none;
+    transition:border-color .1s, background .1s; line-height:1;
+  }
+  .emoji-opt:hover { background:var(--surface2); }
+  .emoji-opt.selected { border-color:var(--accent); background:rgba(255,107,53,.1); }
+
   @media print {
     .nav-tab, .admin-header, #panel-stats, .btn-print, .admin-tabs, .qr-intro { display:none!important; }
     body { background:white; color:black; }
@@ -714,6 +726,27 @@
           type="text"
           placeholder="https://www.linkedin.com/in/username"
           maxlength="100" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="X / Twitter（任意）" data-en="X / Twitter (optional)">X / Twitter（任意）</label>
+      <input class="form-input"
+          id="input-x"
+          type="text"
+          placeholder="https://x.com/username"
+          maxlength="100" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="Facebook（任意）" data-en="Facebook (optional)">Facebook（任意）</label>
+      <input class="form-input"
+          id="input-facebook"
+          type="text"
+          placeholder="https://www.facebook.com/username"
+          maxlength="100" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
+      <div class="emoji-current-wrap"><span class="emoji-current" id="reg-emoji-current">🌟</span></div>
+      <div class="emoji-grid" id="reg-emoji-grid"></div>
     </div>
     <button class="btn-primary" id="btn-start" onclick="startMission()">ミッションをスタート →</button>
   </div>
@@ -897,6 +930,19 @@
     <div class="form-group">
       <label class="form-label" data-ja="LinkedIn（任意）" data-en="LinkedIn (optional)">LinkedIn（任意）</label>
       <input class="form-input" id="profile-linkedin" type="text" placeholder="https://www.linkedin.com/in/username" maxlength="100" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="X / Twitter（任意）" data-en="X / Twitter (optional)">X / Twitter（任意）</label>
+      <input class="form-input" id="profile-x" type="text" placeholder="https://x.com/username" maxlength="100" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="Facebook（任意）" data-en="Facebook (optional)">Facebook（任意）</label>
+      <input class="form-input" id="profile-facebook" type="text" placeholder="https://www.facebook.com/username" maxlength="100" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
+      <div class="emoji-current-wrap"><span class="emoji-current" id="profile-emoji-current">🌟</span></div>
+      <div class="emoji-grid" id="profile-emoji-grid"></div>
     </div>
     <button class="btn-primary" onclick="saveProfile()"><span data-ja="保存する" data-en="Save">保存する</span></button>
 
@@ -1108,7 +1154,7 @@ const CAT_CONFIG = {
 };
 
 // ── STATE ────────────────────────────────────────────────────
-let userId=null, userName='', userOrg='', userIg='', userLi='', cleared={};
+let userId=null, userName='', userOrg='', userIg='', userLi='', userX='', userFb='', userEmoji='', cleared={};
 let myMetCount = 0;
 let fbUrl = 'https://itamae-mission.asia-southeast1.firebasedatabase.app';
 let appUrl = localStorage.getItem('itamae_app_url') || location.origin + location.pathname;
@@ -1167,21 +1213,30 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedName    = localStorage.getItem('itamae_name');
   const savedIg      = localStorage.getItem('itamae_ig') || '';
   const savedLi      = localStorage.getItem('itamae_li') || '';
+  const savedX       = localStorage.getItem('itamae_x')  || '';
+  const savedFb      = localStorage.getItem('itamae_fb') || '';
+  const savedEmoji   = localStorage.getItem('itamae_emoji') || '🌟';
   const savedCleared = JSON.parse(localStorage.getItem('itamae_cleared') || '{}');
   if (savedUid && savedName) {
-    userId   = savedUid;
-    userName = savedName;
-    userOrg  = '—';
-    userIg   = savedIg;
-    userLi   = savedLi;
-    cleared  = savedCleared;
+    userId    = savedUid;
+    userName  = savedName;
+    userOrg   = '—';
+    userIg    = savedIg;
+    userLi    = savedLi;
+    userX     = savedX;
+    userFb    = savedFb;
+    userEmoji = savedEmoji;
+    cleared   = savedCleared;
     if (fbUrl) {
       try {
         const userData = await fbGet('/users/' + userId);
         if (userData) {
-          cleared = userData.cleared || savedCleared;
-          userIg  = userData.ig || savedIg;
-          userLi  = userData.li || savedLi;
+          cleared   = userData.cleared || savedCleared;
+          userIg    = userData.ig    || savedIg;
+          userLi    = userData.li    || savedLi;
+          userX     = userData.x     || savedX;
+          userFb    = userData.fb    || savedFb;
+          userEmoji = userData.emoji || savedEmoji;
         }
         // userData === null はネットワークエラーの可能性もあるため
         // localStorageのデータで続行し、セッションは破棄しない
@@ -1190,7 +1245,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
     document.getElementById('input-name').value = userName;
-    document.getElementById('disp-name').textContent = userName;
+    document.getElementById('disp-name').textContent = (userEmoji ? userEmoji + ' ' : '') + userName;
     renderMissions();
     document.getElementById('nav-tab').style.display = 'flex';
     applyLang();
@@ -1203,15 +1258,45 @@ window.addEventListener('DOMContentLoaded', async () => {
   showScreen('welcome');
 });
 
-function showRegister() { showScreen('register'); }
+function showRegister() {
+  showScreen('register');
+  renderEmojiGrid('reg-emoji-grid', 'reg-emoji-current');
+}
+
+// ── EMOJI PICKER ─────────────────────────────────────────────
+const EMOJI_OPTIONS = ['🌟','🔥','🎯','🚀','💡','🎉','🌈','⚡','🦊','🐼','🐬','🦋','🌸','🍀','🎸','🏄','🎨','🧠','💪','🤝'];
+
+function renderEmojiGrid(gridId, currentId) {
+  const grid = document.getElementById(gridId);
+  const currentEl = document.getElementById(currentId);
+  if (!grid || !currentEl) return;
+  const current = currentEl.textContent || '🌟';
+  grid.innerHTML = '';
+  EMOJI_OPTIONS.forEach(em => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'emoji-opt' + (em === current ? ' selected' : '');
+    btn.textContent = em;
+    btn.onclick = () => selectEmoji(gridId, currentId, em);
+    grid.appendChild(btn);
+  });
+}
+
+function selectEmoji(gridId, currentId, em) {
+  document.getElementById(currentId).textContent = em;
+  const grid = document.getElementById(gridId);
+  grid.querySelectorAll('.emoji-opt').forEach(b => {
+    b.classList.toggle('selected', b.textContent === em);
+  });
+}
 
 // ── SESSION WATCHER ──────────────────────────────────────────
 // adminで削除されたユーザーを検知してセッションをリセットする
 let sessionWatchTimer = null;
 
 function clearSession() {
-  ['itamae_uid','itamae_name','itamae_ig','itamae_li','itamae_cleared'].forEach(k => localStorage.removeItem(k));
-  userId = null; userName = ''; userOrg = ''; userIg = ''; userLi = ''; cleared = {};
+  ['itamae_uid','itamae_name','itamae_ig','itamae_li','itamae_x','itamae_fb','itamae_emoji','itamae_cleared'].forEach(k => localStorage.removeItem(k));
+  userId = null; userName = ''; userOrg = ''; userIg = ''; userLi = ''; userX = ''; userFb = ''; userEmoji = ''; cleared = {};
   stopRankingListener();
   if (sessionWatchTimer) { clearInterval(sessionWatchTimer); sessionWatchTimer = null; }
   document.getElementById('nav-tab').style.display = 'none';
@@ -1297,9 +1382,16 @@ async function startMission() {
   const liRaw = document.getElementById('input-linkedin').value.trim();
   const liMatch = liRaw.match(/linkedin\.com\/in\/([^/?#\s]+)/);
   const li = liMatch ? liMatch[1] : liRaw.replace(/^@/, '');
+  const xRaw = document.getElementById('input-x').value.trim();
+  const xMatch = xRaw.match(/(?:x\.com|twitter\.com)\/([^/?#\s]+)/);
+  const xHandle = xMatch ? xMatch[1] : xRaw.replace(/^@/, '');
+  const fbRaw = document.getElementById('input-facebook').value.trim();
+  const fbMatch = fbRaw.match(/facebook\.com\/([^/?#\s]+)/);
+  const fbHandle = fbMatch ? fbMatch[1] : fbRaw;
+  const emoji = document.getElementById('reg-emoji-current').textContent || '🌟';
   if (!name) { alert(t('名前を入力してください','Please enter your name')); return; }
 
-  userName = name; userOrg = '—'; userIg = ig; userLi = li;
+  userName = name; userOrg = '—'; userIg = ig; userLi = li; userX = xHandle; userFb = fbHandle; userEmoji = emoji;
   userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
 
   if (fbUrl) {
@@ -1312,6 +1404,7 @@ async function startMission() {
           if (existingUid && existingUid === match[0]) {
             // 同じ人が再ログイン → そのまま復元
             userId=match[0]; cleared=match[1].cleared||{}; userIg=match[1].ig||ig; userLi=match[1].li||li;
+            userX=match[1].x||xHandle; userFb=match[1].fb||fbHandle; userEmoji=match[1].emoji||emoji;
           } else {
             // 別の人が同じ名前を使おうとしている → エラー
             alert(t('この名前はすでに使われています。\n別の名前を入力してください。', 'This name is already taken.\nPlease choose a different name.'));
@@ -1319,7 +1412,7 @@ async function startMission() {
           }
         }
       }
-      await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, li:userLi, cleared, registeredAt:Date.now() });
+      await fbSet('/users/'+userId, { name:userName, org:userOrg, ig:userIg, li:userLi, x:userX, fb:userFb, emoji:userEmoji, cleared, registeredAt:Date.now() });
     } catch(e) { console.warn('Firebase error', e); }
   }
 
@@ -1328,8 +1421,11 @@ async function startMission() {
   localStorage.setItem('itamae_name', userName);
   localStorage.setItem('itamae_ig', userIg);
   localStorage.setItem('itamae_li', userLi);
+  localStorage.setItem('itamae_x', userX);
+  localStorage.setItem('itamae_fb', userFb);
+  localStorage.setItem('itamae_emoji', userEmoji);
 
-  document.getElementById('disp-name').textContent = userName;
+  document.getElementById('disp-name').textContent = (userEmoji ? userEmoji + ' ' : '') + userName;
   document.getElementById('nav-tab').style.display = 'flex';
   try { renderMissions(); } catch(e) { console.warn('renderMissions error', e); }
   showScreen('missions');
@@ -1946,6 +2042,11 @@ async function switchTab(tab) {
     document.getElementById('profile-name').value = userName;
     document.getElementById('profile-instagram').value = userIg ? 'https://www.instagram.com/' + userIg : '';
     document.getElementById('profile-linkedin').value = userLi ? 'https://www.linkedin.com/in/' + userLi : '';
+    document.getElementById('profile-x').value = userX ? 'https://x.com/' + userX : '';
+    document.getElementById('profile-facebook').value = userFb ? 'https://www.facebook.com/' + userFb : '';
+    const pec = document.getElementById('profile-emoji-current');
+    pec.textContent = userEmoji || '🌟';
+    renderEmojiGrid('profile-emoji-grid', 'profile-emoji-current');
   } else {
     showScreen('missions');
     stopRankingListener();
@@ -1964,18 +2065,31 @@ async function saveProfile() {
   const liRaw = document.getElementById('profile-linkedin').value.trim();
   const liMatch = liRaw.match(/linkedin\.com\/in\/([^/?#\s]+)/);
   const li = liMatch ? liMatch[1] : liRaw.replace(/^@/, '');
+  const xRaw = document.getElementById('profile-x').value.trim();
+  const xMatch = xRaw.match(/(?:x\.com|twitter\.com)\/([^/?#\s]+)/);
+  const x = xMatch ? xMatch[1] : xRaw.replace(/^@/, '');
+  const fbRaw2 = document.getElementById('profile-facebook').value.trim();
+  const fbMatch2 = fbRaw2.match(/facebook\.com\/([^/?#\s]+)/);
+  const fb = fbMatch2 ? fbMatch2[1] : fbRaw2;
+  const emoji = document.getElementById('profile-emoji-current').textContent || '🌟';
 
-  userName = name; userIg = ig; userLi = li;
+  userName = name; userIg = ig; userLi = li; userX = x; userFb = fb; userEmoji = emoji;
   localStorage.setItem('itamae_name', userName);
   localStorage.setItem('itamae_ig', userIg);
   localStorage.setItem('itamae_li', userLi);
-  document.getElementById('disp-name').textContent = userName;
+  localStorage.setItem('itamae_x', userX);
+  localStorage.setItem('itamae_fb', userFb);
+  localStorage.setItem('itamae_emoji', userEmoji);
+  document.getElementById('disp-name').textContent = (userEmoji ? userEmoji + ' ' : '') + userName;
 
   if (fbUrl && userId) {
     try {
       await fbSet('/users/' + userId + '/name', userName);
       await fbSet('/users/' + userId + '/ig', userIg);
       await fbSet('/users/' + userId + '/li', userLi);
+      await fbSet('/users/' + userId + '/x', userX);
+      await fbSet('/users/' + userId + '/fb', userFb);
+      await fbSet('/users/' + userId + '/emoji', userEmoji);
     } catch(e) { console.warn('Firebase error', e); }
   }
   showToast(t('プロフィールを保存しました ✓', 'Profile saved ✓'));
