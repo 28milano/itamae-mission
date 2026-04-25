@@ -843,8 +843,8 @@
     <div class="form-group">
       <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
       <button type="button" class="emoji-avatar-trigger" onclick="openEmojiModal('reg-emoji-current')">
-        <span id="reg-emoji-current">🌟</span>
-        <span class="emoji-avatar-trigger-label" data-ja="タップして変更" data-en="Tap to change">タップして変更</span>
+        <span id="reg-emoji-current">🍣</span>
+        <span class="emoji-avatar-trigger-label" data-ja="タップして選択" data-en="Tap to change">タップして選択</span>
       </button>
     </div>
     <button class="btn-primary" id="btn-start" onclick="startMission()">ミッションをスタート →</button>
@@ -1022,7 +1022,7 @@
   <!-- アバター -->
   <div class="profile-avatar-area">
     <button class="profile-avatar-btn" onclick="openEmojiModal('profile-emoji-current')" aria-label="絵文字を変更">
-      <span id="profile-emoji-current">🌟</span>
+      <span id="profile-emoji-current">🍣</span>
       <div class="profile-avatar-edit">✏️</div>
     </button>
     <div id="profile-avatar-name"></div>
@@ -1335,7 +1335,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedLi      = localStorage.getItem('itamae_li') || '';
   const savedX       = localStorage.getItem('itamae_x')  || '';
   const savedFb      = localStorage.getItem('itamae_fb') || '';
-  const savedEmoji   = localStorage.getItem('itamae_emoji') || '🌟';
+  const savedEmoji   = localStorage.getItem('itamae_emoji') || '🍣';
   const savedCleared = JSON.parse(localStorage.getItem('itamae_cleared') || '{}');
   if (savedUid && savedName) {
     userId    = savedUid;
@@ -1398,13 +1398,15 @@ const EMOJI_OPTIONS = [
   '🎨','🎸','🎹','📷','🎬','🎮','💻','🔭','🔬','🎙️',
   // シンボル・その他
   '🌟','🔥','🚀','💡','⚡','🎉','🌈','💎','🏆','🗝️','💪','🤝','🧠','👑','🫀',
+  // 追加
+  '🌍','🎭','🛸',
 ];
 
 function renderEmojiGrid(gridId, currentId) {
   const grid = document.getElementById(gridId);
   const currentEl = document.getElementById(currentId);
   if (!grid || !currentEl) return;
-  const current = currentEl.textContent || '🌟';
+  const current = currentEl.textContent || '🍣';
   grid.innerHTML = '';
   EMOJI_OPTIONS.forEach(em => {
     const btn = document.createElement('button');
@@ -1535,7 +1537,7 @@ async function startMission() {
   const fbRaw = document.getElementById('input-facebook').value.trim();
   const fbMatch = fbRaw.match(/facebook\.com\/([^/?#\s]+)/);
   const fbHandle = fbMatch ? fbMatch[1] : fbRaw;
-  const emoji = document.getElementById('reg-emoji-current').textContent || '🌟';
+  const emoji = document.getElementById('reg-emoji-current').textContent || '🍣';
   if (!name) { alert(t('名前を入力してください','Please enter your name')); return; }
 
   userName = name; userOrg = '—'; userIg = ig; userLi = li; userX = xHandle; userFb = fbHandle; userEmoji = emoji;
@@ -2192,7 +2194,7 @@ async function switchTab(tab) {
     document.getElementById('profile-x').value = userX ? 'https://x.com/' + userX : '';
     document.getElementById('profile-facebook').value = userFb ? 'https://www.facebook.com/' + userFb : '';
     const pec = document.getElementById('profile-emoji-current');
-    pec.textContent = userEmoji || '🌟';
+    pec.textContent = userEmoji || '🍣';
     document.getElementById('profile-avatar-name').textContent = userName;
   } else {
     showScreen('missions');
@@ -2218,7 +2220,7 @@ async function saveProfile() {
   const fbRaw2 = document.getElementById('profile-facebook').value.trim();
   const fbMatch2 = fbRaw2.match(/facebook\.com\/([^/?#\s]+)/);
   const fb = fbMatch2 ? fbMatch2[1] : fbRaw2;
-  const emoji = document.getElementById('profile-emoji-current').textContent || '🌟';
+  const emoji = document.getElementById('profile-emoji-current').textContent || '🍣';
 
   userName = name; userIg = ig; userLi = li; userX = x; userFb = fb; userEmoji = emoji;
   localStorage.setItem('itamae_name', userName);
@@ -2535,7 +2537,7 @@ let _emojiModalTarget = null;
 
 function openEmojiModal(targetId) {
   _emojiModalTarget = targetId;
-  const current = document.getElementById(targetId)?.textContent || '🌟';
+  const current = document.getElementById(targetId)?.textContent || '🍣';
   const modal = document.getElementById('emoji-modal');
   const grid  = document.getElementById('emoji-modal-grid');
   grid.innerHTML = '';
