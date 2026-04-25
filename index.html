@@ -813,6 +813,13 @@
       <input class="form-input" id="input-name" type="text" placeholder="例：山田太郎" maxlength="20" />
     </div>
     <div class="form-group">
+      <label class="form-label" data-ja="My 絵文字" data-en="My Emoji">My 絵文字</label>
+      <button type="button" class="emoji-avatar-trigger" onclick="openEmojiModal('reg-emoji-current')">
+        <span id="reg-emoji-current">🍣</span>
+        <span class="emoji-avatar-trigger-label" data-ja="タップして選択" data-en="Tap to select">タップして選択</span>
+      </button>
+    </div>
+    <div class="form-group">
       <label class="form-label" data-ja="Instagram（任意）" data-en="Instagram (optional)">Instagram（任意）</label>
       <div class="sns-field">
         <span class="sns-badge sns-ig">IG</span>
@@ -839,13 +846,6 @@
         <span class="sns-badge sns-fb">f</span>
         <input class="form-input" id="input-facebook" type="text" placeholder="https://www.facebook.com/username" maxlength="100" />
       </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
-      <button type="button" class="emoji-avatar-trigger" onclick="openEmojiModal('reg-emoji-current')">
-        <span id="reg-emoji-current">🍣</span>
-        <span class="emoji-avatar-trigger-label" data-ja="タップして選択" data-en="Tap to change">タップして選択</span>
-      </button>
     </div>
     <button class="btn-primary" id="btn-start" onclick="startMission()">ミッションをスタート →</button>
   </div>
