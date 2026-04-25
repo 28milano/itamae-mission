@@ -571,6 +571,49 @@
     padding:.5rem .75rem; background:var(--surface2); border-radius:6px;
   }
 
+  /* ── EMOJI AVATAR TRIGGER ── */
+  .emoji-avatar-trigger {
+    display:flex; align-items:center; gap:.85rem;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:14px; padding:.65rem 1rem; width:100%;
+    cursor:pointer; transition:border-color .15s;
+  }
+  .emoji-avatar-trigger:hover { border-color:var(--accent); }
+  .emoji-avatar-trigger > span:first-child { font-size:2rem; line-height:1; }
+  .emoji-avatar-trigger-label { font-size:.8rem; color:var(--muted); }
+
+  /* ── EMOJI MODAL ── */
+  .emoji-modal-overlay {
+    display:none; position:fixed; inset:0; z-index:1000;
+    background:rgba(0,0,0,.6); align-items:flex-end;
+    backdrop-filter:blur(4px);
+  }
+  .emoji-modal-overlay.open { display:flex; }
+  .emoji-modal-sheet {
+    width:100%; max-width:480px; margin:0 auto;
+    background:var(--surface); border-radius:20px 20px 0 0;
+    padding:1rem 1rem 2rem;
+    animation:slideUp .22s ease;
+  }
+  @keyframes slideUp {
+    from { transform:translateY(100%); }
+    to   { transform:translateY(0); }
+  }
+  .emoji-modal-header {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:.85rem; font-weight:700; color:var(--muted);
+    margin-bottom:.85rem; letter-spacing:.05em; text-transform:uppercase;
+  }
+  .emoji-modal-close {
+    background:var(--surface2); border:none; color:var(--muted);
+    width:28px; height:28px; border-radius:50%; cursor:pointer;
+    font-size:.8rem; display:flex; align-items:center; justify-content:center;
+  }
+  .emoji-modal-grid {
+    display:grid; grid-template-columns:repeat(8,1fr); gap:.3rem;
+  }
+  .emoji-modal-grid .emoji-opt { font-size:1.6rem; padding:.3rem; border-radius:10px; }
+
   /* ── SNS FIELDS ── */
   .sns-field { position:relative; }
   .sns-field .form-input { padding-left:3rem; }
@@ -799,8 +842,10 @@
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
-      <div class="emoji-current-wrap"><span class="emoji-current" id="reg-emoji-current">🌟</span></div>
-      <div class="emoji-grid" id="reg-emoji-grid"></div>
+      <button type="button" class="emoji-avatar-trigger" onclick="openEmojiModal('reg-emoji-current')">
+        <span id="reg-emoji-current">🌟</span>
+        <span class="emoji-avatar-trigger-label" data-ja="タップして変更" data-en="Tap to change">タップして変更</span>
+      </button>
     </div>
     <button class="btn-primary" id="btn-start" onclick="startMission()">ミッションをスタート →</button>
   </div>
@@ -976,7 +1021,7 @@
 
   <!-- アバター -->
   <div class="profile-avatar-area">
-    <button class="profile-avatar-btn" onclick="toggleProfileEmojiPicker()" aria-label="絵文字を変更">
+    <button class="profile-avatar-btn" onclick="openEmojiModal('profile-emoji-current')" aria-label="絵文字を変更">
       <span id="profile-emoji-current">🌟</span>
       <div class="profile-avatar-edit">✏️</div>
     </button>
@@ -1335,7 +1380,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 function showRegister() {
   showScreen('register');
-  renderEmojiGrid('reg-emoji-grid', 'reg-emoji-current');
 }
 
 // ── EMOJI PICKER ─────────────────────────────────────────────
@@ -2150,8 +2194,6 @@ async function switchTab(tab) {
     const pec = document.getElementById('profile-emoji-current');
     pec.textContent = userEmoji || '🌟';
     document.getElementById('profile-avatar-name').textContent = userName;
-    document.getElementById('profile-emoji-picker-wrap').style.display = 'none';
-    renderEmojiGrid('profile-emoji-grid', 'profile-emoji-current');
   } else {
     showScreen('missions');
     stopRankingListener();
@@ -2487,6 +2529,52 @@ function showToast(msg) {
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
+
+// ── EMOJI MODAL ───────────────────────────────────────────────
+let _emojiModalTarget = null;
+
+function openEmojiModal(targetId) {
+  _emojiModalTarget = targetId;
+  const current = document.getElementById(targetId)?.textContent || '🌟';
+  const modal = document.getElementById('emoji-modal');
+  const grid  = document.getElementById('emoji-modal-grid');
+  grid.innerHTML = '';
+  EMOJI_OPTIONS.forEach(em => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'emoji-opt' + (em === current ? ' selected' : '');
+    btn.textContent = em;
+    btn.onclick = () => pickEmojiFromModal(em);
+    grid.appendChild(btn);
+  });
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function pickEmojiFromModal(em) {
+  if (_emojiModalTarget) {
+    document.getElementById(_emojiModalTarget).textContent = em;
+  }
+  closeEmojiModal();
+}
+
+function closeEmojiModal() {
+  document.getElementById('emoji-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _emojiModalTarget = null;
+}
 </script>
+
+<!-- EMOJI MODAL -->
+<div id="emoji-modal" class="emoji-modal-overlay" onclick="if(event.target===this)closeEmojiModal()">
+  <div class="emoji-modal-sheet">
+    <div class="emoji-modal-header">
+      <span data-ja="絵文字を選ぶ" data-en="Choose Emoji">絵文字を選ぶ</span>
+      <button class="emoji-modal-close" onclick="closeEmojiModal()">✕</button>
+    </div>
+    <div class="emoji-modal-grid" id="emoji-modal-grid"></div>
+  </div>
+</div>
+
 </body>
 </html>
