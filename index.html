@@ -744,7 +744,7 @@
       data-ja="上記の内容を確認のうえ、次へお進みください。"
       data-en="By proceeding, you acknowledge the above.">上記の内容を確認のうえ、次へお進みください。</p>
 
-    <button class="btn-primary" onclick="showScreen('register')"
+    <button class="btn-primary" onclick="showRegister()"
       data-ja="確認しました →"
       data-en="I understand →">確認しました →</button>
   </div>
@@ -1413,7 +1413,7 @@ async function checkSessionAlive() {
     if (userData === null) {
       clearSession();
       showToast(t('セッションがリセットされました', 'Session has been reset'));
-      showScreen('register');
+      showRegister();
     }
   } catch(e) { /* ネットワークエラーは無視 */ }
 }
