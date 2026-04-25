@@ -571,6 +571,30 @@
     padding:.5rem .75rem; background:var(--surface2); border-radius:6px;
   }
 
+  /* ── SNS FIELDS ── */
+  .sns-field { position:relative; }
+  .sns-field .form-input { padding-left:3rem; }
+  .sns-badge {
+    position:absolute; left:.75rem; top:50%; transform:translateY(-50%);
+    width:22px; height:22px; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.75rem; font-weight:700; color:#fff; pointer-events:none;
+    flex-shrink:0;
+  }
+  .sns-ig   { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+  .sns-li   { background:#0077b5; }
+  .sns-x    { background:#000; color:#fff; font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:-.03em; }
+  .sns-fb   { background:#1877f2; }
+  /* focus時にバッジ色でボーダー */
+  .sns-field:has(#input-instagram:focus) .form-input,
+  .sns-field:has(#profile-instagram:focus) .form-input { border-color:#e6683c; }
+  .sns-field:has(#input-linkedin:focus) .form-input,
+  .sns-field:has(#profile-linkedin:focus) .form-input { border-color:#0077b5; }
+  .sns-field:has(#input-x:focus) .form-input,
+  .sns-field:has(#profile-x:focus) .form-input { border-color:#555; }
+  .sns-field:has(#input-facebook:focus) .form-input,
+  .sns-field:has(#profile-facebook:focus) .form-input { border-color:#1877f2; }
+
   /* ── EMOJI PICKER (register form) ── */
   .emoji-current-wrap { text-align:center; margin-bottom:.6rem; }
   .emoji-current { font-size:2.8rem; display:inline-block; }
@@ -747,35 +771,31 @@
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="Instagram（任意）" data-en="Instagram (optional)">Instagram（任意）</label>
-      <input class="form-input"
-          id="input-instagram"
-          type="text"
-          placeholder="https://www.instagram.com/username"
-          maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-ig">IG</span>
+        <input class="form-input" id="input-instagram" type="text" placeholder="https://www.instagram.com/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="LinkedIn（任意）" data-en="LinkedIn (optional)">LinkedIn（任意）</label>
-      <input class="form-input"
-          id="input-linkedin"
-          type="text"
-          placeholder="https://www.linkedin.com/in/username"
-          maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-li">in</span>
+        <input class="form-input" id="input-linkedin" type="text" placeholder="https://www.linkedin.com/in/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="X / Twitter（任意）" data-en="X / Twitter (optional)">X / Twitter（任意）</label>
-      <input class="form-input"
-          id="input-x"
-          type="text"
-          placeholder="https://x.com/username"
-          maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-x">𝕏</span>
+        <input class="form-input" id="input-x" type="text" placeholder="https://x.com/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="Facebook（任意）" data-en="Facebook (optional)">Facebook（任意）</label>
-      <input class="form-input"
-          id="input-facebook"
-          type="text"
-          placeholder="https://www.facebook.com/username"
-          maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-fb">f</span>
+        <input class="form-input" id="input-facebook" type="text" placeholder="https://www.facebook.com/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="絵文字アバター" data-en="Emoji Avatar">絵文字アバター</label>
@@ -972,19 +992,31 @@
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="Instagram（任意）" data-en="Instagram (optional)">Instagram（任意）</label>
-      <input class="form-input" id="profile-instagram" type="text" placeholder="https://www.instagram.com/username" maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-ig">IG</span>
+        <input class="form-input" id="profile-instagram" type="text" placeholder="https://www.instagram.com/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="LinkedIn（任意）" data-en="LinkedIn (optional)">LinkedIn（任意）</label>
-      <input class="form-input" id="profile-linkedin" type="text" placeholder="https://www.linkedin.com/in/username" maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-li">in</span>
+        <input class="form-input" id="profile-linkedin" type="text" placeholder="https://www.linkedin.com/in/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="X / Twitter（任意）" data-en="X / Twitter (optional)">X / Twitter（任意）</label>
-      <input class="form-input" id="profile-x" type="text" placeholder="https://x.com/username" maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-x">𝕏</span>
+        <input class="form-input" id="profile-x" type="text" placeholder="https://x.com/username" maxlength="100" />
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" data-ja="Facebook（任意）" data-en="Facebook (optional)">Facebook（任意）</label>
-      <input class="form-input" id="profile-facebook" type="text" placeholder="https://www.facebook.com/username" maxlength="100" />
+      <div class="sns-field">
+        <span class="sns-badge sns-fb">f</span>
+        <input class="form-input" id="profile-facebook" type="text" placeholder="https://www.facebook.com/username" maxlength="100" />
+      </div>
     </div>
     <button class="btn-primary" onclick="saveProfile()"><span data-ja="保存する" data-en="Save">保存する</span></button>
 
