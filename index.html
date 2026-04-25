@@ -829,8 +829,9 @@
       </div>
     </div>
     <div class="header-top">
-      <div class="header-name">👋 <strong id="disp-name"></strong><span id="disp-name-suffix" data-ja="さんのミッション" data-en="'s Missions">さんのミッション</span></div>
-      <div style="font-family:'Space Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--accent);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.3);border-radius:8px;padding:.2rem .65rem" id="disp-pts">0pt</div>
+      <div class="header-name">
+        <span style="font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.3);border-radius:6px;padding:.15rem .5rem;margin-right:.5rem" id="disp-pts">0pt</span><strong id="disp-name"></strong><span id="disp-name-suffix" data-ja="さんのミッション" data-en="'s Missions">さんのミッション</span>
+      </div>
     </div>
     <div id="seg-bar" style="display:flex;gap:3px;margin:.6rem 0"></div>
     <div class="progress-label">
@@ -2436,7 +2437,7 @@ function renderPublicRankingFromData(all) {
       const m=MISSIONS.find(x=>x.id===id); return s+(m?m.pts:0);
     },0);
     const pts = metCount * 5 + missionPts;
-    return { uid, name: u.name || '—', n, pts, cats, metCount };
+    return { uid, name: u.name || '—', emoji: u.emoji || '', n, pts, cats, metCount };
   });
 
   const users = ranked.sort((a,b) => b.pts - a.pts || b.n - a.n);
@@ -2473,7 +2474,7 @@ function renderPublicRankingFromData(all) {
           ? `<div class="rank-medal">${medals[i]}</div>`
           : `<div class="rank-num-plain">${i+1}</div>`}
         <div class="rank-info">
-          <div class="rank-info-name">${u.name}</div>
+          <div class="rank-info-name">${u.emoji ? '<span style="margin-right:.3rem">' + u.emoji + '</span>' : ''}${u.name}</div>
           <div class="rank-info-sub">${u.n} ${lang==='en'?'missions':'ミッションクリア'} ${catBadges}${u.metCount > 0 ? ` ・🤝 ${u.metCount}${lang==='en'?' met':'人'}` : ''}</div>
         </div>
         <div class="rank-pts-badge">${u.pts}pt</div>
