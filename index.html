@@ -1145,10 +1145,23 @@
       </div>
       <div id="meet-modal-li" style="margin-top:.6rem;display:none">
         <a id="meet-modal-li-link"
-          target="_blank"
-          rel="noopener noreferrer"
+          target="_blank" rel="noopener noreferrer"
           style="display:inline-flex;align-items:center;gap:.5rem;background:#0077b5;color:white;padding:.65rem 1.25rem;border-radius:100px;font-size:.9rem;font-weight:700;text-decoration:none">
           💼 <span id="meet-modal-li-text"></span>
+        </a>
+      </div>
+      <div id="meet-modal-x" style="margin-top:.6rem;display:none">
+        <a id="meet-modal-x-link"
+          target="_blank" rel="noopener noreferrer"
+          style="display:inline-flex;align-items:center;gap:.5rem;background:#000;color:white;padding:.65rem 1.25rem;border-radius:100px;font-size:.9rem;font-weight:700;text-decoration:none">
+          𝕏 <span id="meet-modal-x-text"></span>
+        </a>
+      </div>
+      <div id="meet-modal-fb" style="margin-top:.6rem;display:none">
+        <a id="meet-modal-fb-link"
+          target="_blank" rel="noopener noreferrer"
+          style="display:inline-flex;align-items:center;gap:.5rem;background:#1877f2;color:white;padding:.65rem 1.25rem;border-radius:100px;font-size:.9rem;font-weight:700;text-decoration:none">
+          f <span id="meet-modal-fb-text"></span>
         </a>
       </div>
     </div>
@@ -2199,11 +2212,13 @@ async function handleQrResult(rawUrl) {
       const now = Date.now();
       await fbSet('/meetings/' + userId + '/' + meetUserId, now);
       await fbSet('/meetings/' + meetUserId + '/' + userId, now);
-      const igHandle = new URLSearchParams(new URL(rawUrl).search).get('ig');
-      const liHandle = new URLSearchParams(new URL(rawUrl).search).get('li');
       const metUser = await fbGet('/users/' + meetUserId);
-      const metName = metUser ? metUser.name : null;
-      showMeetSuccessModal(igHandle, liHandle, metName);
+      const metName   = metUser ? metUser.name   : null;
+      const igHandle  = metUser ? metUser.ig  || '' : '';
+      const liHandle  = metUser ? metUser.li  || '' : '';
+      const xHandle   = metUser ? metUser.x   || '' : '';
+      const fbHandle  = metUser ? metUser.fb  || '' : '';
+      showMeetSuccessModal(igHandle, liHandle, metName, xHandle, fbHandle);
       loadMetList();
     } catch(e) {
       showToast(t('記録に失敗しました', 'Failed to record'));
@@ -2413,19 +2428,38 @@ async function loadMetList() {
       Object.keys(meetings).map(async uid => {
         try {
           const user = await fbGet('/users/' + uid);
-          return user ? { name: user.name, ig: user.ig || '', li: user.li || '' } : { name: uid, ig: '', li: '' };
-        } catch(e) { return { name: uid, ig: '', li: '' }; }
+          if (user && user.name) {
+            return {
+              name:  user.name,
+              emoji: user.emoji || '',
+              ig:    user.ig   || '',
+              li:    user.li   || '',
+              x:     user.x    || '',
+              fb:    user.fb   || '',
+            };
+          }
+          return { name: '不明', emoji: '', ig: '', li: '', x: '', fb: '' };
+        } catch(e) { return { name: '不明', emoji: '', ig: '', li: '', x: '', fb: '' }; }
       })
     );
 
     document.getElementById('met-list').innerHTML = users.map(u => `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
-        padding:.4rem .75rem;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.5rem">
-        <span>${u.name}</span>
-        ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
-          style="color:#e1306c;font-size:.7rem;text-decoration:none">@${u.ig}</a>` : ''}
-        ${u.li ? `<a href="https://www.linkedin.com/in/${u.li}/" target="_blank" rel="noopener noreferrer"
-          style="color:#0077b5;font-size:.7rem;text-decoration:none">in/${u.li}</a>` : ''}
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;
+        padding:.55rem .85rem;font-size:.82rem;font-weight:700;display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;align-items:center;gap:.4rem">
+          ${u.emoji ? `<span style="font-size:1.1rem">${u.emoji}</span>` : ''}
+          <span>${u.name}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem">
+          ${u.ig ? `<a href="https://www.instagram.com/${u.ig}/" target="_blank" rel="noopener noreferrer"
+            style="color:#e1306c;font-size:.7rem;text-decoration:none;background:rgba(225,48,108,.1);border-radius:4px;padding:.1rem .4rem">IG @${u.ig}</a>` : ''}
+          ${u.li ? `<a href="https://www.linkedin.com/in/${u.li}/" target="_blank" rel="noopener noreferrer"
+            style="color:#0077b5;font-size:.7rem;text-decoration:none;background:rgba(0,119,181,.1);border-radius:4px;padding:.1rem .4rem">in/${u.li}</a>` : ''}
+          ${u.x ? `<a href="https://x.com/${u.x}/" target="_blank" rel="noopener noreferrer"
+            style="color:#aaa;font-size:.7rem;text-decoration:none;background:rgba(255,255,255,.06);border-radius:4px;padding:.1rem .4rem">𝕏 @${u.x}</a>` : ''}
+          ${u.fb ? `<a href="https://www.facebook.com/${u.fb}/" target="_blank" rel="noopener noreferrer"
+            style="color:#1877f2;font-size:.7rem;text-decoration:none;background:rgba(24,119,242,.1);border-radius:4px;padding:.1rem .4rem">fb/${u.fb}</a>` : ''}
+        </div>
       </div>
     `).join('');
   } catch(e) {
@@ -2433,39 +2467,39 @@ async function loadMetList() {
   }
 }
 
-function showMeetSuccessModal(igHandle, liHandle, metName) {
-  const igSection = document.getElementById('meet-modal-ig');
-  const igLink    = document.getElementById('meet-modal-ig-link');
-  const igText    = document.getElementById('meet-modal-ig-text');
-  const liSection = document.getElementById('meet-modal-li');
-  const liLink    = document.getElementById('meet-modal-li-link');
-  const liText    = document.getElementById('meet-modal-li-text');
-  const title     = document.getElementById('meet-modal-title');
-
-  title.textContent = metName
+function showMeetSuccessModal(igHandle, liHandle, metName, xHandle, fbHandle) {
+  document.getElementById('meet-modal-title').textContent = metName
     ? metName + t('と友だちになりました！', ' added as a friend!')
     : t('友だちになりました！', 'Added as a friend!');
 
-  if (igHandle) {
-    igSection.style.display = 'block';
-    igLink.href = 'https://www.instagram.com/' + igHandle + '/';
-    igLink.target = '_blank';
-    igLink.rel = 'noopener noreferrer';
-    igLink.onclick = null;
-    igText.textContent = (metName || ('@' + igHandle)) + ' とInstagramでつながる';
-  } else {
-    igSection.style.display = 'none';
-  }
-  if (liHandle) {
-    liSection.style.display = 'block';
-    liLink.href = 'https://www.linkedin.com/in/' + liHandle + '/';
-    liLink.target = '_blank';
-    liLink.rel = 'noopener noreferrer';
-    liLink.onclick = null;
-    liText.textContent = (metName || liHandle) + ' とLinkedInでつながる';
-  } else {
-    liSection.style.display = 'none';
-  }
+  const setLink = (sectionId, linkId, textId, href, label) => {
+    const sec  = document.getElementById(sectionId);
+    const link = document.getElementById(linkId);
+    const text = document.getElementById(textId);
+    if (href) {
+      sec.style.display = 'block';
+      link.href = href;
+      text.textContent = label;
+    } else {
+      sec.style.display = 'none';
+    }
+  };
+
+  setLink('meet-modal-ig', 'meet-modal-ig-link', 'meet-modal-ig-text',
+    igHandle ? 'https://www.instagram.com/' + igHandle + '/' : '',
+    (metName || igHandle) + ' とInstagramでつながる');
+
+  setLink('meet-modal-li', 'meet-modal-li-link', 'meet-modal-li-text',
+    liHandle ? 'https://www.linkedin.com/in/' + liHandle + '/' : '',
+    (metName || liHandle) + ' とLinkedInでつながる');
+
+  setLink('meet-modal-x', 'meet-modal-x-link', 'meet-modal-x-text',
+    xHandle ? 'https://x.com/' + xHandle + '/' : '',
+    (metName || xHandle) + ' と X でつながる');
+
+  setLink('meet-modal-fb', 'meet-modal-fb-link', 'meet-modal-fb-text',
+    fbHandle ? 'https://www.facebook.com/' + fbHandle + '/' : '',
+    (metName || fbHandle) + ' と Facebookでつながる');
 
   document.getElementById('modal-meet').classList.add('open');
 }
