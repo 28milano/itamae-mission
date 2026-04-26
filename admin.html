@@ -886,6 +886,11 @@ async function switchAdminTab(tab) {
   }
 }
 
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 async function loadInquiries() {
   const el = document.getElementById('inquiry-list');
   el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:2rem">読み込み中...</div>';
@@ -897,33 +902,41 @@ async function loadInquiries() {
     }
     const items = Object.entries(data).sort((a,b) => b[1].timestamp - a[1].timestamp);
     el.innerHTML = items.map(([key, q]) => {
+      if (!q || typeof q !== 'object') return '';
       const date = new Date(q.timestamp).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
       const isRead = q.read;
       const hasReply = !!q.reply;
       const replyDate = q.repliedAt ? new Date(q.repliedAt).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const safeKey = escHtml(key);
       return `
         <div style="background:var(--surface2);border:1px solid ${isRead ? 'var(--border)' : 'var(--accent)'};border-radius:10px;padding:1rem;margin-bottom:.75rem;position:relative">
           ${!isRead ? '<div style="position:absolute;top:.75rem;right:.75rem;background:var(--accent);color:#000;font-size:.6rem;font-weight:700;padding:.15rem .45rem;border-radius:100px">未読</div>' : ''}
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
-            <span style="font-weight:700;font-size:.88rem">${q.name || '不明'}</span>
+            <span style="font-weight:700;font-size:.88rem">${escHtml(q.name) || '不明'}</span>
             <span style="font-size:.7rem;color:var(--muted)">${date}</span>
           </div>
-          <div style="font-size:.88rem;line-height:1.6;white-space:pre-wrap">${q.message}</div>
+          <div style="font-size:.88rem;line-height:1.6;white-space:pre-wrap">${escHtml(q.message)}</div>
 
           ${hasReply ? `
             <div style="margin-top:.75rem;background:rgba(16,185,129,.08);border-left:3px solid var(--success);border-radius:0 8px 8px 0;padding:.6rem .75rem">
               <div style="font-size:.65rem;color:var(--success);font-weight:700;margin-bottom:.2rem">✓ 返信済み ${replyDate}</div>
-              <div style="font-size:.82rem;line-height:1.5;white-space:pre-wrap">${q.reply}</div>
-              <button onclick="deleteReply('${key}')" style="margin-top:.4rem;background:none;border:none;color:var(--muted);font-size:.68rem;cursor:pointer;padding:0">返信を削除</button>
+              <div style="font-size:.82rem;line-height:1.5;white-space:pre-wrap">${escHtml(q.reply)}</div>
+              <button onclick="deleteReply('${safeKey}')" style="margin-top:.4rem;background:none;border:none;color:var(--muted);font-size:.68rem;cursor:pointer;padding:0">返信を削除</button>
             </div>` : ''}
 
           <div style="margin-top:.75rem;display:flex;gap:.5rem">
-            <textarea id="reply-${key}" rows="2" placeholder="返信を入力..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--text);font-size:.82rem;font-family:'Zen Kaku Gothic New',sans-serif;resize:none;outline:none">${hasReply ? q.reply : ''}</textarea>
-            <button onclick="sendReply('${key}')" style="background:var(--success);color:#fff;border:none;border-radius:8px;padding:.5rem .85rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;align-self:flex-end">送信</button>
+            <textarea id="reply-${safeKey}" rows="2" placeholder="返信を入力..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--text);font-size:.82rem;font-family:'Zen Kaku Gothic New',sans-serif;resize:none;outline:none"></textarea>
+            <button onclick="sendReply('${safeKey}')" style="background:var(--success);color:#fff;border:none;border-radius:8px;padding:.5rem .85rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;align-self:flex-end">送信</button>
           </div>
-          ${!isRead ? `<button onclick="markRead('${key}')" style="margin-top:.5rem;background:none;border:1px solid var(--border);border-radius:6px;padding:.25rem .65rem;color:var(--muted);font-size:.68rem;cursor:pointer">既読にする</button>` : '<div style="font-size:.7rem;color:var(--muted);margin-top:.4rem">✓ 既読</div>'}
+          ${!isRead ? `<button onclick="markRead('${safeKey}')" style="margin-top:.5rem;background:none;border:1px solid var(--border);border-radius:6px;padding:.25rem .65rem;color:var(--muted);font-size:.68rem;cursor:pointer">既読にする</button>` : '<div style="font-size:.7rem;color:var(--muted);margin-top:.4rem">✓ 既読</div>'}
         </div>`;
     }).join('');
+    // textarea の既存返信テキストを value で安全にセット（innerHTML注入を避ける）
+    items.forEach(([key, q]) => {
+      if (!q || typeof q !== 'object') return;
+      const ta = document.getElementById('reply-' + key);
+      if (ta && q.reply) ta.value = q.reply;
+    });
   } catch(e) {
     el.innerHTML = '<div style="color:#ef4444;font-size:.85rem;text-align:center;padding:2rem">読み込みに失敗しました</div>';
   }
@@ -937,7 +950,9 @@ async function markRead(key) {
 }
 
 async function sendReply(key) {
-  const text = document.getElementById('reply-' + key)?.value.trim();
+  const el = document.getElementById('reply-' + key);
+  if (!el) { showToast('エラー：テキストエリアが見つかりません'); return; }
+  const text = el.value.trim();
   if (!text) { showToast('返信を入力してください'); return; }
   try {
     await fbSet('/inquiries/' + key + '/reply',     text);
