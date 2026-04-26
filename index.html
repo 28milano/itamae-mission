@@ -2534,6 +2534,7 @@ async function startRankingListener() {
   rankingEventSource.addEventListener('put', (e) => {
     const { path, data } = JSON.parse(e.data);
     if (path === '/') {
+      // data が null = /users ノードごと削除された（全リセット）
       rankingUsersCache = data || {};
     } else {
       if (!rankingUsersCache) rankingUsersCache = {};
@@ -2589,7 +2590,12 @@ async function renderPublicRanking() {
 }
 
 function renderPublicRankingFromData(all) {
-  if (!all) return;
+  if (!all || Object.keys(all).length === 0) {
+    document.getElementById('ranking-public-list').innerHTML =
+      `<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:2rem">${t('まだ参加者がいません','No participants yet')}</div>`;
+    document.getElementById('my-rank-banner').style.display = 'none';
+    return;
+  }
 
   const ranked = Object.entries(all).map(([uid, u]) => {
     const n = Object.keys(u.cleared || {}).length;
