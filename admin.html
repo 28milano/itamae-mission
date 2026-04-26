@@ -188,10 +188,22 @@
 
   @media print {
     .nav-tab, .admin-header, #panel-stats, .btn-print, .admin-tabs, .qr-intro { display:none!important; }
-    body { background:white; color:black; }
-    .qr-card { border:1px solid #ccc; break-inside:avoid; }
-    .qr-grid { grid-template-columns:repeat(3,1fr); }
-    .qr-card-title,.qr-card-cat,.qr-url { color:#333; }
+    body { background:#fff; margin:0; padding:0; }
+    .qr-grid { display:block; margin:0; padding:0; }
+    .qr-card {
+      border:none; box-shadow:none;
+      page-break-after:always; break-after:page;
+      width:100vw; height:100vh;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:1.5rem; padding:3rem; box-sizing:border-box;
+    }
+    .qr-card:last-child { page-break-after:avoid; break-after:avoid; }
+    .qr-card canvas, .qr-card img { width:280px!important; height:280px!important; }
+    .qr-card-cat { font-size:1.1rem; font-weight:700; }
+    .qr-card-title { font-size:1.4rem; font-weight:700; line-height:1.5; }
+    .qr-url { font-size:.75rem; }
+    .qr-card-title,.qr-card-cat,.qr-url { color:#111; }
   }
 </style>
 </head>
