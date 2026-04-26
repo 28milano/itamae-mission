@@ -1106,10 +1106,6 @@
     <div class="modal-title" id="modal-title"></div>
     <div class="modal-desc" id="modal-desc"></div>
     <div class="modal-note" id="modal-note"></div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
-      <button class="btn-confirm" onclick="confirmMission()">✓ クリア！</button>
-    </div>
   </div>
 </div>
 
@@ -1123,8 +1119,7 @@
     <input class="form-input" id="kw-input" type="text" style="margin-bottom:1rem" />
     <div id="kw-error" style="font-size:.78rem;color:#ef4444;margin-bottom:.75rem;min-height:1.2em;text-align:center"></div>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeKeywordModal()">キャンセル</button>
-      <button class="btn-confirm" style="background:var(--cat-c)" onclick="submitKeyword()">✓ 送信</button>
+      <button class="btn-confirm" style="background:var(--cat-c);width:100%" onclick="submitKeyword()">✓ 送信</button>
     </div>
   </div>
 </div>
@@ -1931,16 +1926,27 @@ let missionSettings = {};
 async function loadCustomMissions() {
   if (!fbUrl) return;
   try {
-    const customs = await fbGet('/custom_missions');
-    // カスタムミッションを一旦全削除して最新状態に同期（削除されたものも消える）
+    // カスタムミッションを一旦全削除して最新状態に同期
     for (let i = MISSIONS.length - 1; i >= 0; i--) {
       if (MISSIONS[i].custom) MISSIONS.splice(i, 1);
     }
-    if (!customs) return;
-    Object.values(customs).forEach(m => {
-      if (!m || !m.id) return;
-      MISSIONS.push(m);
-    });
+    const [customs, hidden] = await Promise.all([
+      fbGet('/custom_missions'),
+      fbGet('/settings/hiddenMissions')
+    ]);
+    // カスタムミッション追加
+    if (customs) {
+      Object.values(customs).forEach(m => {
+        if (!m || !m.id) return;
+        MISSIONS.push(m);
+      });
+    }
+    // 非表示ミッションをフィルタリング
+    if (hidden) {
+      for (let i = MISSIONS.length - 1; i >= 0; i--) {
+        if (hidden[MISSIONS[i].id]) MISSIONS.splice(i, 1);
+      }
+    }
   } catch(e) { console.warn('custom missions load failed', e); }
 }
 

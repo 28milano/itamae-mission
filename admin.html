@@ -350,7 +350,23 @@
         </div>
       </div>
 
-      <!-- ② 追加済みミッション一覧 -->
+      <!-- ② 全ミッション管理 -->
+      <div class="acc-section">
+        <div class="acc-header" onclick="toggleAcc('acc-all-missions')">
+          <span>🗂️ ミッション管理（削除）</span>
+          <span class="acc-arrow" id="arrow-acc-all-missions">▼</span>
+        </div>
+        <div class="acc-body" id="acc-all-missions" style="display:none">
+          <div class="qr-intro" style="margin-bottom:.75rem;font-size:.78rem">
+            削除すると参加者アプリからも消えます。固定ミッションも非表示にできます。
+          </div>
+          <div id="all-missions-list">
+            <div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">読み込み中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 追加済みカスタムミッション一覧（後方互換） -->
       <div class="acc-section">
         <div class="acc-header" onclick="toggleAcc('acc-custom')">
           <span>📋 追加済みミッション一覧</span>
@@ -839,8 +855,13 @@ function toggleAcc(id) {
   const body  = document.getElementById(id);
   const arrow = document.getElementById('arrow-' + id);
   if (!body) return;
+  const wasOpen = body.style.display !== 'none' && body.classList.contains('open');
   body.classList.toggle('open');
+  body.style.display = body.classList.contains('open') ? 'block' : 'none';
   if (arrow) arrow.classList.toggle('open');
+  // ミッション管理を開いたときに自動ロード
+  if (id === 'acc-all-missions' && body.classList.contains('open')) loadAllMissionsList();
+  if (id === 'acc-custom'       && body.classList.contains('open')) loadCustomMissionsList();
 }
 
 async function switchAdminTab(tab) {
@@ -1512,7 +1533,70 @@ async function deleteCustomMission(id) {
   try {
     await fbReq('/custom_missions/' + id, 'DELETE');
     loadCustomMissionsList();
+    loadAllMissionsList();
   } catch(e) { alert('削除に失敗しました'); }
+}
+
+// ── 全ミッション管理 ─────────────────────────────────────────
+async function loadAllMissionsList() {
+  const list = document.getElementById('all-missions-list');
+  if (!list) return;
+
+  // 非表示リスト取得
+  let hidden = {};
+  if (fbUrl) {
+    try { hidden = (await fbGet('/settings/hiddenMissions')) || {}; } catch(e) {}
+  }
+
+  // カスタムミッション取得
+  let allMissions = [...MISSIONS];
+  if (fbUrl) {
+    try {
+      const customs = await fbGet('/custom_missions');
+      if (customs) Object.values(customs).forEach(m => {
+        if (m && m.id && !allMissions.find(x => x.id === m.id)) allMissions.push(m);
+      });
+    } catch(e) {}
+  }
+
+  const catColor = c => c==='A' ? 'var(--cat-a)' : c==='B' ? 'var(--cat-b)' : 'var(--cat-c)';
+
+  list.innerHTML = allMissions.map(m => {
+    const textJa = typeof m.text === 'object' ? m.text.ja : (m.text || m.id);
+    const isHidden = !!hidden[m.id];
+    return `
+      <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.68rem;color:${catColor(m.cat)};font-weight:700;margin-bottom:.15rem">
+            カテゴリ${m.cat} · ${m.pts}pt · ${m.mode}${m.custom ? ' · カスタム' : ''}
+          </div>
+          <div style="font-size:.82rem;font-weight:700;line-height:1.4;${isHidden ? 'opacity:.4;text-decoration:line-through' : ''}">${textJa}</div>
+        </div>
+        ${isHidden
+          ? `<button onclick="restoreMission('${m.id}')" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:6px;padding:.3rem .6rem;color:var(--success);font-size:.7rem;cursor:pointer;white-space:nowrap;flex-shrink:0">復元</button>`
+          : `<button onclick="hideMission('${m.id}')" style="background:#ef444415;border:1px solid #ef444430;border-radius:6px;padding:.3rem .6rem;color:#ef4444;font-size:.7rem;cursor:pointer;white-space:nowrap;flex-shrink:0">削除</button>`
+        }
+      </div>`;
+  }).join('');
+}
+
+async function hideMission(id) {
+  if (!fbUrl) { alert('Firebase未接続です'); return; }
+  if (!confirm('このミッションを削除（非表示）にしますか？\n参加者アプリから消えます。')) return;
+  try {
+    await fbSet('/settings/hiddenMissions/' + id, true);
+    showToast('ミッションを削除しました');
+    loadAllMissionsList();
+  } catch(e) { alert('削除に失敗しました'); }
+}
+
+async function restoreMission(id) {
+  if (!fbUrl) { alert('Firebase未接続です'); return; }
+  try {
+    await fbReq('/settings/hiddenMissions/' + id, 'DELETE');
+    showToast('ミッションを復元しました');
+    loadAllMissionsList();
+  } catch(e) { alert('復元に失敗しました'); }
 }
 
 async function testFirebase() {
