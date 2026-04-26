@@ -877,6 +877,19 @@
 <!-- MISSIONS -->
 <div id="screen-missions" class="screen has-nav">
 
+  <!-- 返信通知バナー -->
+  <div id="reply-notif" style="display:none;background:rgba(16,185,129,.1);border-bottom:1.5px solid rgba(16,185,129,.28);padding:.65rem 1rem;margin:-1rem -1rem .75rem -1rem">
+    <div style="display:flex;align-items:center;gap:.65rem">
+      <span style="font-size:1.1rem;flex-shrink:0">💬</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.8rem;font-weight:700;color:var(--success)" data-ja="運営から返信が届いています" data-en="You have a reply from organizers">運営から返信が届いています</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:.1rem" data-ja="プロフィール画面で確認できます" data-en="Check in your Profile screen">プロフィール画面で確認できます</div>
+      </div>
+      <button onclick="viewAndDismissReplyNotif()" style="flex-shrink:0;background:var(--success);color:#fff;border:none;border-radius:6px;padding:.3rem .7rem;font-size:.73rem;font-weight:700;cursor:pointer" data-ja="返信を見る" data-en="View reply">返信を見る</button>
+      <button onclick="dismissReplyNotif()" style="flex-shrink:0;background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.1rem .2rem;line-height:1">✕</button>
+    </div>
+  </div>
+
   <!-- ヘッダー（進捗バー・ポイント） -->
   <div class="mission-header">
     <div style="display:flex;justify-content:flex-end;margin-bottom:.5rem">
@@ -1457,6 +1470,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     applyLang();
     showScreen('missions');
     startSessionWatcher();
+    checkInquiryReplies();
     return;
   }
 
@@ -1530,7 +1544,7 @@ function toggleProfileEmojiPicker() {
 let sessionWatchTimer = null;
 
 function clearSession() {
-  ['itamae_uid','itamae_name','itamae_ig','itamae_li','itamae_x','itamae_fb','itamae_emoji','itamae_cleared'].forEach(k => localStorage.removeItem(k));
+  ['itamae_uid','itamae_name','itamae_ig','itamae_li','itamae_x','itamae_fb','itamae_emoji','itamae_cleared','itamae_seen_replies'].forEach(k => localStorage.removeItem(k));
   userId = null; userName = ''; userOrg = ''; userIg = ''; userLi = ''; userX = ''; userFb = ''; userEmoji = ''; cleared = {};
   stopRankingListener();
   if (sessionWatchTimer) { clearInterval(sessionWatchTimer); sessionWatchTimer = null; }
@@ -2301,6 +2315,7 @@ async function switchTab(tab) {
     stopRankingListener();
     await loadCustomMissions();
     renderMissions();
+    checkInquiryReplies();
   }
 }
 
@@ -2402,6 +2417,41 @@ async function sendInquiry() {
     msgEl.style.color = '#ef4444';
     msgEl.textContent = t('送信に失敗しました。もう一度お試しください', 'Failed to send. Please try again');
   }
+}
+
+// ── INQUIRY REPLY NOTIFICATION ───────────────────────────────
+async function checkInquiryReplies() {
+  const notif = document.getElementById('reply-notif');
+  if (!notif || !userId || !fbUrl) return;
+  try {
+    const seen = JSON.parse(localStorage.getItem('itamae_seen_replies') || '[]');
+    const all = await fbGet('/inquiries');
+    if (!all) return;
+    const hasNew = Object.entries(all).some(([key, q]) =>
+      q.userId === userId && q.reply && !seen.includes(key)
+    );
+    notif.style.display = hasNew ? 'block' : 'none';
+    if (hasNew) applyLang();
+  } catch(e) {}
+}
+
+function dismissReplyNotif() {
+  const notif = document.getElementById('reply-notif');
+  if (notif) notif.style.display = 'none';
+  if (!userId || !fbUrl) return;
+  fbGet('/inquiries').then(all => {
+    if (!all) return;
+    const seen = JSON.parse(localStorage.getItem('itamae_seen_replies') || '[]');
+    Object.entries(all).forEach(([key, q]) => {
+      if (q.userId === userId && q.reply && !seen.includes(key)) seen.push(key);
+    });
+    localStorage.setItem('itamae_seen_replies', JSON.stringify(seen));
+  }).catch(()=>{});
+}
+
+function viewAndDismissReplyNotif() {
+  dismissReplyNotif();
+  switchTab('profile');
 }
 
 // ── MY QR ────────────────────────────────────────────────────
