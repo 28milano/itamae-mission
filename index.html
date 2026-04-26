@@ -886,8 +886,12 @@
       </div>
     </div>
     <div class="header-top">
-      <div class="header-name">
-        <span style="font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.3);border-radius:6px;padding:.15rem .5rem;margin-right:.5rem" id="disp-pts">0pt</span><strong id="disp-name"></strong><span id="disp-name-suffix" data-ja="さんのミッション" data-en="'s Missions">さんのミッション</span>
+      <div class="header-name" style="display:flex;flex-direction:column;gap:.2rem;align-items:flex-start">
+        <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.04em;line-height:1" data-ja="合計ポイント" data-en="Total Points">合計ポイント</div>
+        <div style="display:flex;align-items:baseline;gap:.5rem">
+          <span style="font-family:'Space Mono',monospace;font-size:1.35rem;font-weight:700;color:var(--text);line-height:1" id="disp-pts">0pt</span>
+          <span style="font-size:.85rem;color:var(--muted)"><strong id="disp-name"></strong><span id="disp-name-suffix" data-ja="さんのミッション" data-en="'s Missions">さんのミッション</span></span>
+        </div>
       </div>
     </div>
     <div id="seg-bar" style="display:flex;gap:3px;margin:.6rem 0"></div>
