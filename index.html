@@ -1426,7 +1426,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (fbUrl) {
       try {
         const userData = await fbGet('/users/' + userId);
-        if (userData === null) {
+        if (!userData || !userData.name) {
           // Firebase にユーザーが存在しない = 管理者に削除された
           clearSession();
           applyLang();
@@ -1538,10 +1538,10 @@ async function checkSessionAlive() {
   try {
     const userData = await fbGet('/users/' + userId);
     // null = Firebaseから消えた（adminが削除）
-    if (userData === null) {
+    if (!userData || !userData.name) {
       clearSession();
-      showToast(t('セッションがリセットされました', 'Session has been reset'));
-      showRegister();
+      applyLang();
+      showScreen('welcome');
     }
   } catch(e) { /* ネットワークエラーは無視 */ }
 }
