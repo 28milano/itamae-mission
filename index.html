@@ -1426,6 +1426,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (fbUrl) {
       try {
         const userData = await fbGet('/users/' + userId);
+        if (userData === null) {
+          // Firebase にユーザーが存在しない = 管理者に削除された
+          clearSession();
+          applyLang();
+          showScreen('welcome');
+          return;
+        }
         if (userData) {
           cleared   = userData.cleared || savedCleared;
           userIg    = userData.ig    || savedIg;
@@ -1434,9 +1441,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           userFb    = userData.fb    || savedFb;
           userEmoji = userData.emoji || savedEmoji;
         }
-        // userData === null はネットワークエラーの可能性もあるため
-        // localStorageのデータで続行し、セッションは破棄しない
       } catch(e) {
+        // ネットワークエラーはlocalStorageで続行（オフライン対応）
         console.warn('Firebase restore failed, using local data', e);
       }
     }
