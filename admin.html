@@ -899,6 +899,8 @@ async function loadInquiries() {
     el.innerHTML = items.map(([key, q]) => {
       const date = new Date(q.timestamp).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
       const isRead = q.read;
+      const hasReply = !!q.reply;
+      const replyDate = q.repliedAt ? new Date(q.repliedAt).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
       return `
         <div style="background:var(--surface2);border:1px solid ${isRead ? 'var(--border)' : 'var(--accent)'};border-radius:10px;padding:1rem;margin-bottom:.75rem;position:relative">
           ${!isRead ? '<div style="position:absolute;top:.75rem;right:.75rem;background:var(--accent);color:#000;font-size:.6rem;font-weight:700;padding:.15rem .45rem;border-radius:100px">未読</div>' : ''}
@@ -907,7 +909,19 @@ async function loadInquiries() {
             <span style="font-size:.7rem;color:var(--muted)">${date}</span>
           </div>
           <div style="font-size:.88rem;line-height:1.6;white-space:pre-wrap">${q.message}</div>
-          ${!isRead ? `<button onclick="markRead('${key}')" style="margin-top:.65rem;background:none;border:1px solid var(--border);border-radius:6px;padding:.3rem .75rem;color:var(--muted);font-size:.72rem;cursor:pointer">既読にする</button>` : '<div style="font-size:.7rem;color:var(--muted);margin-top:.5rem">✓ 既読</div>'}
+
+          ${hasReply ? `
+            <div style="margin-top:.75rem;background:rgba(16,185,129,.08);border-left:3px solid var(--success);border-radius:0 8px 8px 0;padding:.6rem .75rem">
+              <div style="font-size:.65rem;color:var(--success);font-weight:700;margin-bottom:.2rem">✓ 返信済み ${replyDate}</div>
+              <div style="font-size:.82rem;line-height:1.5;white-space:pre-wrap">${q.reply}</div>
+              <button onclick="deleteReply('${key}')" style="margin-top:.4rem;background:none;border:none;color:var(--muted);font-size:.68rem;cursor:pointer;padding:0">返信を削除</button>
+            </div>` : ''}
+
+          <div style="margin-top:.75rem;display:flex;gap:.5rem">
+            <textarea id="reply-${key}" rows="2" placeholder="返信を入力..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--text);font-size:.82rem;font-family:'Zen Kaku Gothic New',sans-serif;resize:none;outline:none">${hasReply ? q.reply : ''}</textarea>
+            <button onclick="sendReply('${key}')" style="background:var(--success);color:#fff;border:none;border-radius:8px;padding:.5rem .85rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;align-self:flex-end">送信</button>
+          </div>
+          ${!isRead ? `<button onclick="markRead('${key}')" style="margin-top:.5rem;background:none;border:1px solid var(--border);border-radius:6px;padding:.25rem .65rem;color:var(--muted);font-size:.68rem;cursor:pointer">既読にする</button>` : '<div style="font-size:.7rem;color:var(--muted);margin-top:.4rem">✓ 既読</div>'}
         </div>`;
     }).join('');
   } catch(e) {
@@ -920,6 +934,28 @@ async function markRead(key) {
     await fbReq('/inquiries/' + key + '/read', 'PUT', true);
     loadInquiries();
   } catch(e) { console.warn(e); }
+}
+
+async function sendReply(key) {
+  const text = document.getElementById('reply-' + key)?.value.trim();
+  if (!text) { showToast('返信を入力してください'); return; }
+  try {
+    await fbSet('/inquiries/' + key + '/reply',     text);
+    await fbSet('/inquiries/' + key + '/repliedAt', Date.now());
+    await fbReq('/inquiries/' + key + '/read', 'PUT', true);
+    showToast('返信を送信しました ✓');
+    loadInquiries();
+  } catch(e) { showToast('送信に失敗しました'); }
+}
+
+async function deleteReply(key) {
+  if (!confirm('返信を削除しますか？')) return;
+  try {
+    await fbReq('/inquiries/' + key + '/reply',     'DELETE');
+    await fbReq('/inquiries/' + key + '/repliedAt', 'DELETE');
+    showToast('返信を削除しました');
+    loadInquiries();
+  } catch(e) { showToast('削除に失敗しました'); }
 }
 
 function saveAdminAppUrl() {

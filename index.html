@@ -1072,7 +1072,11 @@
       <div style="font-size:.75rem;color:var(--muted);margin-bottom:.85rem;line-height:1.6"
         data-ja="質問や困ったことがあれば気軽に送ってください。運営が確認します。"
         data-en="Feel free to send any questions. Organizers will check your message.">質問や困ったことがあれば気軽に送ってください。運営が確認します。</div>
-      <textarea class="form-input" id="inquiry-text" rows="4"
+
+      <!-- 過去の問い合わせ＆返信 -->
+      <div id="inquiry-history"></div>
+
+      <textarea class="form-input" id="inquiry-text" rows="3"
         placeholder="例：b2のミッションはどうやって達成しますか？"
         style="resize:none;margin-bottom:.6rem;font-size:.9rem;line-height:1.6"></textarea>
       <button class="btn-primary" onclick="sendInquiry()">
@@ -2254,6 +2258,7 @@ async function switchTab(tab) {
     const pec = document.getElementById('profile-emoji-current');
     pec.textContent = userEmoji || '🍣';
     document.getElementById('profile-avatar-name').textContent = userName;
+    loadInquiryHistory();
   } else {
     showScreen('missions');
     stopRankingListener();
@@ -2303,6 +2308,33 @@ async function saveProfile() {
 }
 
 // ── INQUIRY ──────────────────────────────────────────────────
+async function loadInquiryHistory() {
+  const el = document.getElementById('inquiry-history');
+  if (!el || !fbUrl || !userId) return;
+  try {
+    const all = await fbGet('/inquiries');
+    if (!all) return;
+    // 自分の問い合わせだけ抽出
+    const mine = Object.entries(all)
+      .filter(([,q]) => q.userId === userId)
+      .sort((a,b) => b[1].timestamp - a[1].timestamp);
+    if (mine.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = mine.map(([, q]) => {
+      const date = new Date(q.timestamp).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem;margin-bottom:.65rem">
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:.3rem">${date}</div>
+          <div style="font-size:.85rem;line-height:1.5;white-space:pre-wrap">${q.message}</div>
+          ${q.reply ? `
+            <div style="margin-top:.6rem;background:rgba(16,185,129,.08);border-left:3px solid var(--success);border-radius:0 8px 8px 0;padding:.5rem .65rem">
+              <div style="font-size:.65rem;color:var(--success);font-weight:700;margin-bottom:.15rem">💬 ${t('運営からの返信','Reply from organizers')}</div>
+              <div style="font-size:.82rem;line-height:1.5;white-space:pre-wrap">${q.reply}</div>
+            </div>` : `<div style="font-size:.68rem;color:var(--muted);margin-top:.4rem">⏳ ${t('返信待ち','Awaiting reply')}</div>`}
+        </div>`;
+    }).join('');
+  } catch(e) { console.warn('inquiry history load failed', e); }
+}
+
 async function sendInquiry() {
   const msg = document.getElementById('inquiry-text').value.trim();
   const msgEl = document.getElementById('inquiry-msg');
