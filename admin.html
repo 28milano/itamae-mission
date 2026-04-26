@@ -267,8 +267,9 @@
 
     <!-- USERS PANEL -->
     <div id="panel-users" style="display:none">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
         <button class="admin-tab" style="font-size:.72rem" onclick="loadUsers()">↻ 更新</button>
+        <button onclick="resetAllUsers()" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:.45rem .9rem;font-size:.75rem;font-weight:700;cursor:pointer">🗑️ 全ユーザー削除</button>
       </div>
       <div id="user-list"></div>
     </div>
@@ -471,6 +472,58 @@ const MISSIONS = [
     mode:'qr' },
   { id:'b2', cat:'B', pts:10,
     text:  { ja:'学生団体「Business Contest KING 実行委員会」のブースに訪れた', en:'Visited the "Business Contest KING" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b3', cat:'B', pts:10,
+    text:  { ja:'学生団体「Japan\'s Venture Academy」のブースに訪れた', en:'Visited the "Japan\'s Venture Academy" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b4', cat:'B', pts:10,
+    text:  { ja:'学生団体「東大経榮会」のブースに訪れた', en:'Visited the "Todai Keieikai" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b5', cat:'B', pts:10,
+    text:  { ja:'学生団体「一般社団法人みんなの留学部」のブースに訪れた', en:'Visited the "Minna no Ryugakubu" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b6', cat:'B', pts:10,
+    text:  { ja:'学生団体「TEDxRikkyoU」のブースに訪れた', en:'Visited the "TEDxRikkyoU" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b7', cat:'B', pts:10,
+    text:  { ja:'学生団体「Sophia Start-up Club」のブースに訪れた', en:'Visited the "Sophia Start-up Club" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b8', cat:'B', pts:10,
+    text:  { ja:'学生団体「Returnees Hotline」のブースに訪れた', en:'Visited the "Returnees Hotline" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b9', cat:'B', pts:10,
+    text:  { ja:'学生団体「学生団体Shining」のブースに訪れた', en:'Visited the "Shining" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b10', cat:'B', pts:10,
+    text:  { ja:'学生団体「KBC」のブースに訪れた', en:'Visited the "KBC" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b11', cat:'B', pts:10,
+    text:  { ja:'学生団体「Wit 早稲田大学スタートアップサークル」のブースに訪れた', en:'Visited the "Wit Waseda Startup Circle" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b12', cat:'B', pts:10,
+    text:  { ja:'学生団体「学生団体SONOSAKI」のブースに訪れた', en:'Visited the "SONOSAKI" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b13', cat:'B', pts:10,
+    text:  { ja:'学生団体「ReFamily」のブースに訪れた', en:'Visited the "ReFamily" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b14', cat:'B', pts:10,
+    text:  { ja:'学生団体「Business Contest WING 実行委員会」のブースに訪れた', en:'Visited the "Business Contest WING" student organization booth' },
+    note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
+    mode:'qr' },
+  { id:'b15', cat:'B', pts:10,
+    text:  { ja:'学生団体「みらい探究ラボivy」のブースに訪れた', en:'Visited the "Mirai Tankyu Labo ivy" student organization booth' },
     note:  { ja:'ブースに設置されたQRをスキャン', en:'Scan the QR code placed at the booth' },
     mode:'qr' },
   { id:'c1', cat:'C', pts:10,
@@ -896,6 +949,20 @@ async function deleteUser(uid, name) {
     await fetch(fbUrl.replace(/\/$/, '') + '/users/' + uid + '.json', { method: 'DELETE' });
     await fetch(fbUrl.replace(/\/$/, '') + '/meetings/' + uid + '.json', { method: 'DELETE' });
     showToast(name + ' を削除しました');
+    loadUsers();
+  } catch(e) {
+    showToast('削除に失敗しました');
+  }
+}
+
+async function resetAllUsers() {
+  if (!fbUrl) { alert('Firebase URLが未設定です'); return; }
+  if (!confirm('⚠️ 全ユーザーのデータを削除します。\nランキング・クリア記録・ミーティング情報がすべて消えます。\n\nこの操作は取り消せません。本当に実行しますか？')) return;
+  if (!confirm('最終確認：全ユーザーを削除してよいですか？')) return;
+  try {
+    await fetch(fbUrl.replace(/\/$/, '') + '/users.json',    { method: 'DELETE' });
+    await fetch(fbUrl.replace(/\/$/, '') + '/meetings.json', { method: 'DELETE' });
+    showToast('✓ 全ユーザーを削除しました');
     loadUsers();
   } catch(e) {
     showToast('削除に失敗しました');
