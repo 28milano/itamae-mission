@@ -217,6 +217,7 @@
     padding:1.5rem; width:100%; max-width:480px;
     border-top:1px solid var(--border);
     animation:slideUp .25s ease;
+    position:relative;
   }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 1.25rem; }
@@ -1157,13 +1158,14 @@
 <div class="modal-overlay" id="modal-keyword">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
+    <button onclick="closeKeywordModal()" style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:.2rem .4rem">✕</button>
     <div class="modal-title" id="kw-title"></div>
     <div class="modal-desc" id="kw-question" style="font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.75rem"></div>
     <div class="modal-note" id="kw-hint"></div>
     <input class="form-input" id="kw-input" type="text" style="margin-bottom:1rem" />
     <div id="kw-error" style="font-size:.78rem;color:#ef4444;margin-bottom:.75rem;min-height:1.2em;text-align:center"></div>
     <div class="modal-btns">
-      <button class="btn-confirm" style="background:var(--cat-c);width:100%" onclick="submitKeyword()">✓ 送信</button>
+      <button class="btn-confirm" style="background:var(--cat-c);width:100%" onclick="submitKeyword()" data-ja="✓ 送信" data-en="✓ Submit">✓ 送信</button>
     </div>
   </div>
 </div>
@@ -1967,16 +1969,16 @@ function missionCard(m) {
       ? '<span class="badge-type self">QUIZ</span>'
       : `<span class="badge-type self">${t('入力','Input')}</span>`;
 
-  // クイズ問題文を取得
+  // クイズ問題文を取得（カテゴリCのkeywordミッション）
   let questionHtml = '';
-  if (!isQr && !done) {
+  let hideTitle = false;
+  if (!isQr && isKeyword) {
     const cfg = getMissionConfig(m);
     const q = cfg.question || (typeof m.question === 'object' ? (m.question[lang] || m.question.ja) : m.question);
-    if (q && q !== m.text && q !== (typeof m.text === 'object' ? m.text.ja : m.text)) {
-      const qText = typeof q === 'object' ? (q[lang] || q.ja) : q;
-      if (qText && !qText.includes('ここに入力')) {
-        questionHtml = `<div style="font-size:.75rem;color:var(--muted);margin:.3rem 0 .4rem;line-height:1.5;font-style:italic">${qText}</div>`;
-      }
+    const qText = typeof q === 'object' ? (q[lang] || q.ja) : q;
+    if (qText && !qText.includes('ここに入力')) {
+      questionHtml = `<div style="font-size:.85rem;font-weight:600;color:var(--text);line-height:1.55;margin-bottom:.35rem">${qText}</div>`;
+      hideTitle = true; // 問題文があればタイトル非表示
     }
   }
 
@@ -1995,7 +1997,7 @@ function missionCard(m) {
     <div class="mission-card ${done ? 'done' : ''} ${isQr ? 'qr-type' : ''}">
       <div class="mission-check">${done ? '✓' : ''}</div>
       <div class="mission-body">
-        <div class="mission-text">${mText(m,'text')}</div>
+        ${!hideTitle || done ? `<div class="mission-text">${mText(m,'text')}</div>` : ''}
         ${questionHtml}
         ${done ? `<div class="mission-time">${cleared[m.id]}</div>` : actionBtn}
       </div>
