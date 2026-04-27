@@ -540,7 +540,7 @@
   .cat-collapse-btn {
     display:flex; align-items:center; justify-content:center; gap:.4rem;
     width:100%; background:var(--surface2); border:1px dashed var(--border);
-    border-radius:10px; padding:.6rem 1rem; margin-top:.3rem;
+    border-radius:10px; padding:.6rem 1rem; margin-top:.3rem; margin-bottom:.5rem;
     color:var(--muted); font-size:.8rem; font-weight:700;
     cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif;
     transition:background .15s, color .15s;
@@ -1925,7 +1925,7 @@ function renderMissions() {
     const items = MISSIONS.filter(m => m.cat === cat);
     const catCleared = items.filter(m => cleared[m.id]).length;
     const catDesc = cfg.desc ? (typeof cfg.desc === 'object' ? (cfg.desc[lang] || cfg.desc.ja) : cfg.desc) : '';
-    const FOLD_AT = 2;
+    const FOLD_AT = 3;
     const visible = items.slice(0, FOLD_AT);
     const hidden  = items.slice(FOLD_AT);
     const hiddenCleared = hidden.filter(m => cleared[m.id]).length;
