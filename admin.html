@@ -238,7 +238,8 @@
 
     <!-- STATS PANEL -->
     <div id="panel-stats">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
+      <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-bottom:.75rem">
+        <button onclick="downloadCSV()" style="background:var(--success);color:#fff;border:none;border-radius:8px;padding:.45rem .9rem;font-size:.75rem;font-weight:700;cursor:pointer">📥 CSVダウンロード</button>
         <button class="admin-tab" style="font-size:.72rem" onclick="loadAdmin()">↻ 更新</button>
       </div>
       <div class="admin-stats">
@@ -901,6 +902,79 @@ async function loadAdmin() {
       </div>
     `;
   }).join('');
+}
+
+async function downloadCSV() {
+  if (!fbUrl) { showToast('Firebase未接続'); return; }
+  showToast('データ取得中...');
+  try {
+    const [all, allMeetings] = await Promise.all([
+      fbGet('/users'),
+      fbGet('/meetings')
+    ]);
+    if (!all) { showToast('ユーザーデータなし'); return; }
+
+    const now = new Date();
+    const dateStr = now.getFullYear() + '-'
+      + String(now.getMonth()+1).padStart(2,'0') + '-'
+      + String(now.getDate()).padStart(2,'0') + '_'
+      + String(now.getHours()).padStart(2,'0')
+      + String(now.getMinutes()).padStart(2,'0');
+
+    // ── 1. ランキング CSV ──────────────────────────────
+    const uids = Object.keys(all).filter(uid => all[uid] && all[uid].name);
+    const rows = uids.map(uid => {
+      const u = all[uid];
+      const clearedIds = Object.keys(u.cleared || {});
+      const missionPts = clearedIds.reduce((s, id) => {
+        const m = MISSIONS.find(x => x.id === id); return s + (m ? m.pts : 0);
+      }, 0);
+      const metCount = (allMeetings && allMeetings[uid]) ? Object.keys(allMeetings[uid]).length : 0;
+      const totalPts = missionPts + metCount * 5;
+      const registeredAt = u.registeredAt ? new Date(u.registeredAt).toLocaleString('ja-JP') : '';
+      return { uid, name: u.name||'', emoji: u.emoji||'', ig: u.ig||'', li: u.li||'', x: u.x||'', fb: u.fb||'',
+               missionPts, metCount, totalPts, clearedCount: clearedIds.length, clearedIds: clearedIds.join('|'), registeredAt };
+    }).sort((a,b) => b.totalPts - a.totalPts || b.clearedCount - a.clearedCount);
+
+    rows.forEach((r, i) => { r.rank = i + 1; });
+
+    const rankHeader = ['順位','名前','絵文字','合計pt','ミッションpt','友だち数','友だちpt','クリア数','クリアミッションID','Instagram','LinkedIn','X','Facebook','登録日時','UID'];
+    const rankRows = rows.map(r => [
+      r.rank, r.name, r.emoji, r.totalPts, r.missionPts, r.metCount, r.metCount*5,
+      r.clearedCount, r.clearedIds, r.ig, r.li, r.x, r.fb, r.registeredAt, r.uid
+    ]);
+
+    // ── 2. ミッション別クリア数 CSV ───────────────────
+    const mCounts = {};
+    uids.forEach(uid => Object.keys(all[uid].cleared||{}).forEach(id => { mCounts[id]=(mCounts[id]||0)+1; }));
+    const missionHeader = ['ミッションID','カテゴリ','タイトル','ポイント','クリア数'];
+    const missionRows = MISSIONS.map(m => [m.id, m.cat, (typeof m.text==='object'?m.text.ja:m.text)||'', m.pts, mCounts[m.id]||0]);
+
+    // ── CSV文字列生成 ─────────────────────────────────
+    function toCSV(header, dataRows) {
+      const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+      return [header, ...dataRows].map(row => row.map(esc).join(',')).join('\n');
+    }
+
+    const combined = '【ランキング / Ranking】\n' + toCSV(rankHeader, rankRows)
+      + '\n\n【ミッション別クリア数 / Mission Clear Counts】\n' + toCSV(missionHeader, missionRows);
+
+    // ── ダウンロード ──────────────────────────────────
+    const bom = '﻿'; // Excel用BOM
+    const blob = new Blob([bom + combined], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'itamae-mission_' + dateStr + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('CSVをダウンロードしました ✓');
+  } catch(e) {
+    console.error(e);
+    showToast('ダウンロードに失敗しました');
+  }
 }
 
 async function buildQrGrid() {
