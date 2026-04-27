@@ -1623,6 +1623,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     showScreen('missions');
     startSessionWatcher();
     checkInquiryReplies();
+    loadMetList(); // 友だち数・ポイントを即時反映
     return;
   }
 
@@ -1706,12 +1707,24 @@ function clearSession() {
 async function checkSessionAlive() {
   if (!userId || !fbUrl) return;
   try {
-    const userData = await fbGet('/users/' + userId);
+    const [userData, meetings] = await Promise.all([
+      fbGet('/users/' + userId),
+      fbGet('/meetings/' + userId)
+    ]);
     // null = Firebaseから消えた（adminが削除）
     if (!userData || !userData.name) {
       clearSession();
       applyLang();
       showScreen('welcome');
+      return;
+    }
+    // 友だち数・ポイントを最新化（QRを見せた側も30秒以内に反映）
+    const newCount = meetings ? Object.keys(meetings).length : 0;
+    if (newCount !== myMetCount) {
+      myMetCount = newCount;
+      document.getElementById('disp-pts').textContent = calcMyPts() + 'pt';
+      const metCountEl = document.getElementById('met-count');
+      if (metCountEl) metCountEl.textContent = myMetCount;
     }
   } catch(e) { /* ネットワークエラーは無視 */ }
 }
