@@ -536,6 +536,17 @@
   }
   .btn-keyword:active { opacity:.85; transform:scale(.97); }
 
+  .cat-collapse-btn {
+    display:flex; align-items:center; justify-content:center; gap:.4rem;
+    width:100%; background:var(--surface2); border:1px dashed var(--border);
+    border-radius:10px; padding:.6rem 1rem; margin-top:.3rem;
+    color:var(--muted); font-size:.8rem; font-weight:700;
+    cursor:pointer; font-family:'Zen Kaku Gothic New',sans-serif;
+    transition:background .15s, color .15s;
+  }
+  .cat-collapse-btn:hover { background:var(--surface); color:var(--text); }
+  .collapse-arrow { font-size:.65rem; transition:transform .25s; display:inline-block; }
+
   /* ── SETTINGS PANEL ── */
   .setting-card {
     background:var(--surface); border:1px solid var(--border);
@@ -1908,10 +1919,27 @@ function renderMissions() {
       `;
     }
 
-    // カテゴリB・Cは通常のミッションカード表示
+    // カテゴリB・Cは通常のミッションカード表示（3つ目以降は折りたたみ）
     const items = MISSIONS.filter(m => m.cat === cat);
     const catCleared = items.filter(m => cleared[m.id]).length;
     const catDesc = cfg.desc ? (typeof cfg.desc === 'object' ? (cfg.desc[lang] || cfg.desc.ja) : cfg.desc) : '';
+    const FOLD_AT = 2;
+    const visible = items.slice(0, FOLD_AT);
+    const hidden  = items.slice(FOLD_AT);
+    const hiddenCleared = hidden.filter(m => cleared[m.id]).length;
+    const collapseId = 'collapse-cat-' + cat;
+
+    const hiddenSection = hidden.length > 0 ? `
+      <div id="${collapseId}" style="display:none">
+        ${hidden.map(m => missionCard(m)).join('')}
+      </div>
+      <button onclick="toggleCatCollapse('${collapseId}',this)" class="cat-collapse-btn" data-cat="${cat}">
+        <span class="collapse-arrow">▼</span>
+        <span class="collapse-label-more">${t(`残り${hidden.length}件を見る`, `Show ${hidden.length} more`)}${hiddenCleared > 0 ? ` (${hiddenCleared}クリア済み)` : ''}</span>
+        <span class="collapse-label-less" style="display:none">${t('閉じる','Close')}</span>
+      </button>
+    ` : '';
+
     return `
       <div class="cat-section">
         <div class="cat-header">
@@ -1920,7 +1948,8 @@ function renderMissions() {
           <div class="cat-sub">${catCleared}/${items.length}</div>
         </div>
         ${catDesc ? `<div style="font-size:.78rem;color:var(--muted);margin:-0.25rem 0 .6rem;padding:0 .1rem">${catDesc}</div>` : ''}
-        ${items.map(m => missionCard(m)).join('')}
+        ${visible.map(m => missionCard(m)).join('')}
+        ${hiddenSection}
       </div>
     `;
   }).join('');
@@ -1938,6 +1967,19 @@ function missionCard(m) {
       ? '<span class="badge-type self">QUIZ</span>'
       : `<span class="badge-type self">${t('入力','Input')}</span>`;
 
+  // クイズ問題文を取得
+  let questionHtml = '';
+  if (!isQr && !done) {
+    const cfg = getMissionConfig(m);
+    const q = cfg.question || (typeof m.question === 'object' ? (m.question[lang] || m.question.ja) : m.question);
+    if (q && q !== m.text && q !== (typeof m.text === 'object' ? m.text.ja : m.text)) {
+      const qText = typeof q === 'object' ? (q[lang] || q.ja) : q;
+      if (qText && !qText.includes('ここに入力')) {
+        questionHtml = `<div style="font-size:.75rem;color:var(--muted);margin:.3rem 0 .4rem;line-height:1.5;font-style:italic">${qText}</div>`;
+      }
+    }
+  }
+
   let actionBtn = '';
   if (!done) {
     if (isQr) {
@@ -1954,6 +1996,7 @@ function missionCard(m) {
       <div class="mission-check">${done ? '✓' : ''}</div>
       <div class="mission-body">
         <div class="mission-text">${mText(m,'text')}</div>
+        ${questionHtml}
         ${done ? `<div class="mission-time">${cleared[m.id]}</div>` : actionBtn}
       </div>
       <div class="mission-badge">
@@ -1962,6 +2005,16 @@ function missionCard(m) {
       </div>
     </div>
   `;
+}
+
+function toggleCatCollapse(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  btn.querySelector('.collapse-arrow').style.transform = isOpen ? '' : 'rotate(180deg)';
+  btn.querySelector('.collapse-label-more').style.display = isOpen ? '' : 'none';
+  btn.querySelector('.collapse-label-less').style.display = isOpen ? 'none' : '';
 }
 
 // ── KEYWORD MODAL ────────────────────────────────────────────
