@@ -982,11 +982,15 @@ async function buildQrGrid() {
   const el = document.getElementById('qr-base-url');
   if (el) el.textContent = baseUrl + '?mission=XXX';
 
-  // 固定ミッション＋カスタムミッションを合わせてQR生成
+  // 固定ミッション＋カスタムミッションを合わせてQR生成（非表示ミッションは除外）
   let allQrMissions = MISSIONS.filter(m => m.mode === 'qr');
+  let hiddenIds = {};
   if (fbUrl) {
     try {
-      const customs = await fbGet('/custom_missions');
+      const [customs, hidden] = await Promise.all([
+        fbGet('/custom_missions'),
+        fbGet('/settings/hiddenMissions')
+      ]);
       if (customs) {
         Object.values(customs).forEach(m => {
           if (m && m.mode === 'qr' && !allQrMissions.find(x => x.id === m.id)) {
@@ -994,8 +998,11 @@ async function buildQrGrid() {
           }
         });
       }
+      if (hidden) hiddenIds = hidden;
     } catch(e) {}
   }
+  // 非表示設定のミッションを除外
+  allQrMissions = allQrMissions.filter(m => !hiddenIds[m.id]);
 
   const qrMissions = allQrMissions;
   const grid = document.getElementById('qr-grid');
